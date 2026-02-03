@@ -1,0 +1,96 @@
+%! TeX program = lualatex
+
+\documentclass[11pt,a4paper]{article}
+
+% engine and fonts
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{Inter}
+\setmonofont{JetBrains Mono}
+
+% page layout
+\usepackage{geometry}
+\usepackage{setspace}
+\setlength{\headheight}{14pt}
+
+% language
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+\usepackage{csquotes}
+
+% typography
+\usepackage{microtype}
+
+% color and links
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{1A4F9C}
+
+\usepackage[
+  colorlinks=true,
+  linkcolor=linkblue,
+  urlcolor=linkblue,
+  citecolor=linkblue
+]{hyperref}
+
+% section formatting
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {\thesection.}
+  {0.75em}
+  {}
+
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}
+  {0.75em}
+  {}
+
+\titlespacing*{\section}{0pt}{1.5em}{0.75em}
+\titlespacing*{\subsection}{0pt}{1.25em}{0.5em}
+
+% lists
+\usepackage{enumitem}
+
+% tables and figures
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+
+% diagrams
+% \usepackage{tikz}
+% \usepackage{pgfplots}
+
+% bibliography
+% \usepackage[
+%   backend=biber,
+%   style=authoryear,
+% ]{biblatex}
+% \addbibresource{./references.bib}
+
+% header and footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Project Proposal}
+\fancyhead[R]{\thepage}
+% \renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\input{./sections/title-page.tex}
+\input{./sections/abstract.tex}
+\input{./sections/introduction.tex}
+\input{./sections/objectives.tex}
+\input{./sections/scope.tex}
+\input{./sections/system-overview.tex}
+% \input{./sections/flow-chart.tex}
+\input{./sections/system-design.tex}
+\input{./sections/technology-stack.tex}
+\input{./sections/expected-outcomes.tex}
+\input{./sections/learning-outcomes.tex}
+\input{./sections/timeline.tex}
+
+% \printbibliography
+
+\end{document}
