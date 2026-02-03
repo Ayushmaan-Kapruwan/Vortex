@@ -16,6 +16,9 @@
 	6. free game 
 	7. deals
 	8. manager
+	9. AFK Detection
+	10. Liked Games
+	11. Disliked Games
 
 3. performance
 4. trophies and achievement
