@@ -1,0 +1,41 @@
+{
+	"nodes":[
+		{"id":"dcd7fbc353b7ee10","type":"text","text":"# **Vortex**","x":-420,"y":-180,"width":120,"height":60,"color":"1"},
+		{"id":"d8c694aeba968b46","type":"text","text":"WHAT DOES IT AIMS TO DO ?","x":-484,"y":-50,"width":250,"height":60,"color":"2"},
+		{"id":"fb07ed27136c23c7","type":"text","text":"Aggregate games from different distributors and platforms into one","x":-620,"y":72,"width":220,"height":128,"color":"4"},
+		{"id":"03fba9175dc41726","type":"text","text":"Be as minimal as possible","x":-320,"y":76,"width":200,"height":60,"color":"4"},
+		{"id":"cb9907032f9d618a","type":"text","text":"provide meta data info ","x":-446,"y":234,"width":212,"height":60,"color":"4"},
+		{"id":"9b264abd390bd272","type":"text","text":"Recommend games thru a ML model","x":-60,"y":46,"width":200,"height":60,"color":"3"},
+		{"id":"5c17e6d753bc864d","type":"text","text":"How does it aggregate games exactly ?","x":-795,"y":307,"width":250,"height":60,"color":"2"},
+		{"id":"6bf5190d02336ee4","type":"text","text":"what is meta data ?","x":-525,"y":345,"width":245,"height":60,"color":"2"},
+		{"id":"8e591d4657d97549","type":"text","text":"It is the information about the product like the name, release date genre,download size, studio, recommended specs","x":-562,"y":474,"width":250,"height":206,"color":"4"},
+		{"id":"205398747381c561","type":"text","text":"And how do we get that exactly ?","x":-562,"y":755,"width":250,"height":60,"color":"2"},
+		{"id":"fea98c506fc44cb5","type":"text","text":"We fetch that shi from Popular game metadata libraries like IGDB","x":-619,"y":883,"width":250,"height":117,"color":"4"},
+		{"id":"59289c9265a9521c","type":"text","text":"By minimal, what exactly do you mean ?","x":-245,"y":204,"width":250,"height":60,"color":"2"},
+		{"id":"fada1f18c18d41c0","type":"text","text":"I want the landing experience to be as smooth and intuitive as possible while setting up most of the things","x":-280,"y":367,"width":250,"height":180,"color":"4"},
+		{"id":"e5f84ed050f18574","type":"text","text":"I want the main menu to be THE space, no more useless traversing through different windows and tabs","x":-241,"y":607,"width":250,"height":178,"color":"4"},
+		{"id":"8fb926c2db4a339a","x":-877,"y":42,"width":250,"height":60,"color":"4","type":"text","text":"Playtime tracking and telemetry"},
+		{"id":"08c4daa3e443d765","x":-1025,"y":150,"width":250,"height":60,"color":"2","type":"text","text":"track exactly what ?"},
+		{"id":"2abd9884c59a5f61","type":"text","text":"It runs backend tools like Legendary cli and steam API for user authenticaton and launching","x":-870,"y":439,"width":250,"height":168,"color":"4"},
+		{"id":"e3d5e9e4eb9a07dc","x":-1150,"y":257,"width":250,"height":296,"color":"4","type":"text","text":"1. How many hours ?\n2. how many hours in which quater of day ?\n3. which genre is most played ?\n4. most played game of last month.\n5. top games\n6. etc"}
+	],
+	"edges":[
+		{"id":"7c627b0b1816abd8","fromNode":"dcd7fbc353b7ee10","fromSide":"bottom","toNode":"d8c694aeba968b46","toSide":"top"},
+		{"id":"1ab40508c4bb0d44","fromNode":"d8c694aeba968b46","fromSide":"bottom","toNode":"fb07ed27136c23c7","toSide":"top"},
+		{"id":"9b692f2bb8893810","fromNode":"d8c694aeba968b46","fromSide":"bottom","toNode":"03fba9175dc41726","toSide":"top"},
+		{"id":"80676cb5bbc2434b","fromNode":"d8c694aeba968b46","fromSide":"bottom","toNode":"cb9907032f9d618a","toSide":"top"},
+		{"id":"05d3f53ce681cd32","fromNode":"d8c694aeba968b46","fromSide":"bottom","toNode":"9b264abd390bd272","toSide":"top"},
+		{"id":"b328694141a2a6cb","fromNode":"fb07ed27136c23c7","fromSide":"bottom","toNode":"5c17e6d753bc864d","toSide":"top"},
+		{"id":"c9d09bbae217302b","fromNode":"5c17e6d753bc864d","fromSide":"bottom","toNode":"2abd9884c59a5f61","toSide":"top"},
+		{"id":"67a26727f3fa1267","fromNode":"cb9907032f9d618a","fromSide":"bottom","toNode":"6bf5190d02336ee4","toSide":"top"},
+		{"id":"490c7d8a286dae45","fromNode":"6bf5190d02336ee4","fromSide":"bottom","toNode":"8e591d4657d97549","toSide":"top"},
+		{"id":"272b2a76024a5811","fromNode":"8e591d4657d97549","fromSide":"bottom","toNode":"205398747381c561","toSide":"top"},
+		{"id":"2ab420e4d5aecae2","fromNode":"205398747381c561","fromSide":"bottom","toNode":"fea98c506fc44cb5","toSide":"top"},
+		{"id":"c4885cacf95a5db1","fromNode":"03fba9175dc41726","fromSide":"bottom","toNode":"59289c9265a9521c","toSide":"top"},
+		{"id":"affbdf18218304dc","fromNode":"59289c9265a9521c","fromSide":"bottom","toNode":"fada1f18c18d41c0","toSide":"top"},
+		{"id":"6edc4051cb2227e0","fromNode":"fada1f18c18d41c0","fromSide":"bottom","toNode":"e5f84ed050f18574","toSide":"top"},
+		{"id":"f75aa9ac4ecc6ab1","fromNode":"d8c694aeba968b46","fromSide":"bottom","toNode":"8fb926c2db4a339a","toSide":"top"},
+		{"id":"c94dba8596fe825e","fromNode":"8fb926c2db4a339a","fromSide":"bottom","toNode":"08c4daa3e443d765","toSide":"top"},
+		{"id":"fa9567b75f68edb0","fromNode":"08c4daa3e443d765","fromSide":"bottom","toNode":"e3d5e9e4eb9a07dc","toSide":"top"}
+	]
+}
