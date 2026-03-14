@@ -18,6 +18,7 @@ source/*.txt
 # =========================
 *.vcxproj.user
 *.vcxproj.filters
+*.vcxproj
 *.VC.db
 *.VC.opendb
 *.suo
