@@ -11,7 +11,7 @@ Debug/
 source/Vortex/
 source/Release/
 source/build/
-source/client-crashlog.txt
+source/*.txt
 
 # =========================
 # User-specific files
