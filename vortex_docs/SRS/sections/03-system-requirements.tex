@@ -1,0 +1,51 @@
+\section{SYSTEM REQUIREMENTS}
+
+\subsection{\underline{User Interface}}
+\begin{itemize}
+    \item The current iteration of the user interface operates via a top-level Command Line Interface (CLI) menu, presenting options for Steam games, local directory games, and an exit function.
+    \item The next iteration of the user interface is currently in development for a more modular and interactive experience.
+    \item System shall display main menu with launcher modes.
+    \item System shall display discovered games with index, title, and identifier/path.
+    \item System shall allow user to select and launch game by input.
+    \item System shall provide clear feedback for invalid input and launch failures.
+    \item System shall display recommendation list with score in ranked order (when ML module invoked).
+\end{itemize}
+
+\subsection{\underline{Software Interface}}
+\begin{itemize}
+
+\item \textbf{C++ Core Modules}
+    \begin{itemize}
+	\item \texttt{game\_manager}: local directory scan, sorting, launch.
+	\item \texttt{store\_manager}: Steam registry detection, library parsing, Steam launch.
+    \end{itemize}
+
+\item \textbf{Python Module}
+    \begin{itemize}
+	\item Metadata ingestion from IGDB.
+	\item Feature extraction and score calculation.
+    \end{itemize}
+
+\item \textbf{Planned UI Layer}
+    \begin{itemize}
+	\item Qt/QML frontend over C++ backend services.
+    \end{itemize}
+
+\end{itemize}
+
+\subsection{\underline{Database Interface}}
+\begin{itemize}
+    \item \textbf{Game catalog records}: Comprehensive data on available titles and assets.
+    \item \textbf{Session logs}: Tracking metrics such as start time, end time, and total playtime.
+    \item \textbf{User preference flags}: Binary or categorical data (e.g., like/dislike) for personalization.
+    \item \textbf{Mood-session records}: Links between specific user moods and their corresponding gameplay sessions.
+    \item \textbf{Cached metadata references}: Localized pointers to external assets for optimized performance.
+\end{itemize}
+
+\subsection{\underline{Protocols}}
+\begin{itemize}
+    \item \textbf{Local Process Execution}: Utilizing \texttt{ShellExecute} on Windows for native system calls.
+    \item \textbf{Steam Launch Protocol}: Integration of the \texttt{steam://run/<appid>} URI for direct game initialization.
+    \item \textbf{IGDB API Integration}: Secure HTTPS communication using Twitch OAuth for metadata retrieval.
+    \item \textbf{Inter-Language Bridge}: Internal C++ $\leftrightarrow$ Python data exchange via file-based JSON or an API bridge.
+\end{itemize}

@@ -1,0 +1,148 @@
+%! TeX program = lualatex
+
+\documentclass[12pt,a4paper]{article}
+
+% engine and fonts
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
+\setsansfont{Inter}
+\setmonofont{JetBrains Mono}
+
+% page layout
+\usepackage{geometry}
+\usepackage{setspace}
+
+\setstretch{1.15}
+
+\setlength{\headheight}{15pt}
+
+% language
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+\usepackage{csquotes}
+
+% typography
+\usepackage{microtype}
+
+% color and links
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{1A4F9C}
+
+\usepackage[
+  colorlinks=true,
+  linkcolor=linkblue,
+  urlcolor=linkblue,
+  citecolor=linkblue
+]{hyperref}
+
+% section formatting
+\usepackage{titlesec}
+
+% \titleformat{\section}
+%   {\Large\bfseries}
+%   {\thesection.}
+%   {0.75em}
+%   {}
+
+\titleformat{\section}
+  {\fontsize{14}{16}\bfseries\MakeUppercase}
+  {\thesection.}
+  {0.75em}
+  {}
+
+
+
+% \titleformat{\subsection}
+%   {\large\bfseries}
+%   {\thesubsection}
+%   {0.75em}
+%   {}
+
+\titleformat{\subsection}
+  {\fontsize{12}{14}\bfseries}
+  {\thesubsection}
+  {0.75em}
+  {}
+
+% \titleformat{\subsection}
+%   {\fontsize{12}{14}\bfseries\underline}
+%   {\thesubsection}
+%   {0.75em}
+%   {}
+
+\titlespacing*{\section}{0pt}{1.5em}{0.75em}
+\titlespacing*{\subsection}{0pt}{1.25em}{0.5em}
+
+% lists
+\usepackage{enumitem}
+
+% tables and figures
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\newcommand{\tablefont}{\fontsize{10}{12}\selectfont}
+
+% diagrams
+% \usepackage{tikz}
+% \usepackage{pgfplots}
+
+% bibliography
+\usepackage[
+  backend=biber,
+  style=authoryear,
+]{biblatex}
+\addbibresource{./refs.bib}
+
+% header and footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{SRS}
+\fancyhead[R]{\thepage}
+% \renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{titlepage}
+	\centering
+	% \vspace*{1cm}
+
+	\includegraphics[width=0.5\textwidth]{./figures/upes-university-of-petroleum-and-energy-studies-seeklogo.jpg}\\[0.5cm]
+
+	{\Huge \bfseries \underline{Software Requirements Specification}}\\[0.5cm]
+	{\Huge \bfseries \underline{Vortex}}\\[1cm]
+
+	\renewcommand{\arraystretch}{1.5}
+	\begin{tabular}{>{\bfseries}l l}
+		\toprule
+		Name           & Keerti Vardhan      \\
+		               & Yuvraj Siyaar       \\
+		               & Ayushmaan Kapruwan  \\
+		               & Aditya Kediyal      \\
+		\midrule
+		Course         & Computer Science    \\
+		Specialization & Graphics and Gaming \\
+		Date           & \today              \\
+		\bottomrule
+	\end{tabular}
+
+	\vfill
+
+	{\large University of Petroleum and Energy Studies}\\
+	{\large Dehradun, India}
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+
+\input{./sections/01-introduction.tex}
+\input{./sections/02-project-description.tex}
+\input{./sections/03-system-requirements.tex}
+\input{./sections/04-non-functional-requirements.tex}
+\input{./sections/05-other-requirements.tex}
+\input{./sections/06-appendix.tex}
+
+% \printbibliography
+
+\end{document}
