@@ -1,0 +1,54 @@
+# =========================
+# Visual Studio folders
+# =========================
+.vs/
+
+# =========================
+# Build output folders
+# =========================
+source/x64/
+source/Debug/
+source/Release/
+source/build/
+
+# =========================
+# User-specific files
+# =========================
+*.vcxproj.user
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+
+# =========================
+# Logs and temporary files
+# =========================
+*.log
+client-crashlog
+
+# =========================
+# Compiled binaries
+# =========================
+*.exe
+*.dll
+*.obj
+*.pdb
+*.ilk
+*.lib
+
+# =========================
+# Visual Studio cache
+# =========================
+ipch/
+*.tlog
+*.lastbuildstate
+*.cache
+*.idb
+
+
+# /build/
+# /*.aux
+# /*.log
+# /*.toc
+# /*.out
+# /*.synctex.gz
