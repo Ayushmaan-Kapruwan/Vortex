@@ -1,0 +1,39 @@
+\subsection{User Workflow}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm and 1.2cm,
+    box/.style={rectangle, draw, minimum width=2cm, minimum height=1cm, align=center},
+    arrow/.style={-{Stealth}, thick}
+]
+
+% Top row (User actions)
+\node[box] (add) {Add\\Games};
+\node[box, right=of add] (play) {Play\\Game};
+\node[box, right=of play] (track) {Track\\Session};
+\node[box, right=of track] (recs) {Get\\Recs};
+
+% Bottom row (System components)
+\node[box, below=of add] (library) {Library\\Manager};
+\node[box, below=of play] (launcher) {Launcher\\Service};
+\node[box, below=of track] (pipeline) {Data\\Pipeline};
+\node[box, below=of recs] (ml) {ML\\Engine};
+
+% Horizontal arrows (top row)
+\draw[arrow] (add) -- (play);
+\draw[arrow] (play) -- (track);
+\draw[arrow] (track) -- (recs);
+
+% Vertical arrows
+\draw[arrow] (add) -- (library);
+\draw[arrow] (play) -- (launcher);
+\draw[arrow] (track) -- (pipeline);
+\draw[arrow] (recs) -- (ml);
+
+% Surrounding box - increased inner sep for proper padding
+\node[draw, thick, fit=(add)(recs)(library)(ml), inner sep=0.8cm] {};
+
+\end{tikzpicture}
+\caption{User Workflow}
+\end{figure}

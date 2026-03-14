@@ -1,0 +1,21 @@
+# Fdb version 4
+["pdflatex"] 1770176208.71669 "d:/Projects/Minor/Vortex/vortex_docs/project_proposal/main.tex" "main.pdf" "main" 1770176209.19215 2
+  "d:/Applications/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1770149389 3524 cb3e574dea2d1052e39280babc910dc8 ""
+  "d:/Applications/texlive/2025/texmf-dist/fonts/tfm/public/cm/cmr10.tfm" 1770147734 1296 45809c5a464d5f32c8f98ba97c1bb47f ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/base/article.cls" 1770150702 20144 b966087dda3b194755eb460d32e2ef75 ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/base/size11.clo" 1770150702 8464 f339f4d5391fbe0425b2d94c90e6819e ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/fontspec/fontspec.sty" 1770149411 3804 debc05110ffb506cef68ea4e72c7bcee ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def" 1770150642 30662 bfd6e864f4ffc5018b0e2b6260c3181c ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/l3kernel/expl3.sty" 1770150653 6558 45786cbbf5684a09ee65aa45a7b367e0 ""
+  "d:/Applications/texlive/2025/texmf-dist/tex/latex/l3packages/xparse/xparse.sty" 1770150662 10176 c2fc1c663b3f3899ddac6e6ed3fb1d7e ""
+  "d:/Applications/texlive/2025/texmf-dist/web2c/texmf.cnf" 1770146056 42213 4e2ca030e8e2640502016e9e45868dcb ""
+  "d:/Applications/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1770156290 3636416 9f6212ce8b9d59197826b5af35ce703f ""
+  "d:/Applications/texlive/2025/texmf.cnf" 1770156098 713 e69b156964470283e0530f5060668171 ""
+  "d:/Projects/Minor/Vortex/vortex_docs/project_proposal/main.tex" 1770175094 2066 9e0a519f03ac82a2e808c1247abe90a2 ""
+  "main.aux" 1770176200 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "main.tex" 1770175094 2066 9e0a519f03ac82a2e808c1247abe90a2 ""
+  (generated)
+  "main.aux"
+  "main.log"
+  "main.pdf"
+  (rewritten before read)

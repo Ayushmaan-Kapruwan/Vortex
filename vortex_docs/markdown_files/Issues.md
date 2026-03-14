@@ -1,0 +1,2 @@
+1. won't let me put std::filesystem in a namespace. -- was on C++ 14 changed to C++ 17
+2. would scan all the .exe in a game folder, hard to tell which one launches the game -- fixed by introducing certain block parameters to filter out the redundant .exe names.
