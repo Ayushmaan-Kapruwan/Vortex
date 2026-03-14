@@ -6,19 +6,23 @@
 # =========================
 # Build output folders
 # =========================
-source/x64/
-source/Debug/
+x64/
+Debug/
+source/Vortex/
 source/Release/
 source/build/
+source/client-crashlog.txt
 
 # =========================
 # User-specific files
 # =========================
 *.vcxproj.user
+*.vcxproj.filters
 *.VC.db
 *.VC.opendb
 *.suo
 *.user
+*.sln
 
 # =========================
 # Logs and temporary files
