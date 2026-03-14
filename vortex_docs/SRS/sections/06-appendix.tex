@@ -1,0 +1,83 @@
+\clearpage
+\section{Glossary}
+
+\begin{description}
+
+\item[IGDB]
+Internet Game Database; a large structured database of video game information used to programmatically fetch game metadata via its official API.
+
+\item[Launcher]
+An interface or application that opens a game executable upon user input.
+
+\item[One-Hot Encoding]
+A machine learning technique used to convert categorical data (such as user moods or game genres) into a numerical binary format.
+
+\item[Platforms]
+Digital game distribution services (e.g., Steam, GOG, Epic Games Store) where users purchase, subscribe to, and manage games.
+
+\item[TF--IDF Vectorizer]
+Term Frequency – Inverse Document Frequency; a technique used to convert text documents (such as game descriptions) into numerical vectors that machine learning models can process.
+
+\end{description}
+
+\section{Analysis Model}
+
+\begin{description}
+
+\item[Data to ML Quantification Pipeline]
+The primary analysis model used to process raw system data into machine-readable formats. 
+This pipeline converts text descriptions into TF--IDF float vectors, playtime into normalized
+values scaled between 0 and 1, and time-of-day information into temporal encodings.
+
+\item[Engagement Score Calculation Model]
+An analytical model that computes user engagement with a game by calculating a weighted
+combination of the following components:
+
+\begin{itemize}
+\item Playtime Score
+\item Frequency Score
+\item Length Score
+\end{itemize}
+
+\item[Hybrid Ranker Model]
+The final analysis model responsible for generating recommendations. It calculates a final
+recommendation score between 0.0 and 1.0 using the following weighted components:
+
+\begin{itemize}
+\item Preference Match (0.40)
+\item Similarity to Liked Games (0.35)
+\item Quality Score (0.15)
+\item Exploration Factor (0.10)
+\end{itemize}
+
+\end{description}
+
+\section{Issues List}
+
+\subsection*{Open Issues}
+
+\begin{itemize}
+
+\item The machine learning recommendation module currently yields inconsistent recommendation
+quality. The Python implementation remains a work in progress and requires further calibration.
+
+\item The intended Qt/QML user interface design is not yet finalized.
+
+\item The system experiences the \textit{Cold Start} data sparsity problem for new users with zero
+recorded playtime. This is currently mitigated by asking users to manually select preferred
+genres during the initial setup process.
+
+\end{itemize}
+
+\subsection*{Resolved Issues}
+
+\begin{itemize}
+
+\item The project environment previously failed to place \texttt{std::filesystem} in a namespace.
+This issue was resolved by upgrading the project standard from C++14 to C++17.
+
+\item The local heuristic game scanner initially detected redundant executables such as crash
+handlers and uninstallers. This issue was resolved by implementing block parameters for
+undesired executable names and applying a heuristic that selects the largest executable file.
+
+\end{itemize}

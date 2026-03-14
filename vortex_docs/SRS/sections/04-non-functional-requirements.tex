@@ -1,0 +1,25 @@
+\section{NON-FUNCTIONAL REQUIREMENTS}
+
+\subsection{\underline{Performance Requirements}}
+\begin{itemize}
+    \item \textbf{Game List Retrieval}: Steam and local library fetching must complete within acceptable desktop latency for standard library sizes.
+    \item \textbf{Resource Efficiency}: The launcher must avoid excessive memory usage during the scanning and ranking phases.
+    \item \textbf{Interactive Performance}: Recommendation generation must complete within a user-tolerable timeframe for fluid usage.
+\end{itemize}
+
+\subsection{\underline{Security Requirements}}
+\begin{itemize}
+    \item \textbf{Secret Management}: No plaintext storage of external API secrets within the source code.
+    \item \textbf{Input Validation}: All data from external files or APIs must be validated prior to processing.
+    \item \textbf{Sandboxing}: File and process operations are strictly limited to intended game and application paths.
+    \item \textbf{Data Privacy}: Local user data must remain on-device unless an explicit export is initiated.
+\end{itemize}
+
+\subsection{\underline{Software Quality Attributes}}
+\begin{itemize}
+    \item \textbf{Reliability}: Graceful handling of invalid paths, malformed manifests, and missing registry keys.
+    \item \textbf{Maintainability}: Modular design featuring distinct components for \texttt{game\_manager}, \texttt{steam\_manager}, and the ML module.
+    \item \textbf{Usability}: A simple, low-friction user flow to ensure an intuitive experience.
+    \item \textbf{Portability}: A Windows-first architecture designed with future cross-platform compatibility in mind.
+    \item \textbf{Scalability}: Support for expanding game libraries and additional data features over time.
+\end{itemize}
