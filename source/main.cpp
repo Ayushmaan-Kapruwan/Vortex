@@ -3,12 +3,12 @@
 #include <vector>
 
 #include "game_manager.h"
-#include "steam_manager.h"
-#include "stats_manager.h"
 #include "igdb_manager.h"
+#include "stats_manager.h"
+#include "steam_manager.h"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -59,9 +59,12 @@ static void run_local_mode() {
     cout << "\n=== Local Games ===\n";
     for (size_t i = 0; i < games.size(); ++i) {
       cout << "  [" << (i + 1) << "] " << games[i].name;
-      std::string key = (games[i].igdb_id != 0) ? "igdb_" + std::to_string(games[i].igdb_id) : "local_" + make_canonical(games[i].name);
+      std::string key = (games[i].igdb_id != 0)
+                            ? "igdb_" + std::to_string(games[i].igdb_id)
+                            : "local_" + make_canonical(games[i].name);
       long long pt = get_playtime(key);
-      if (pt > 0) cout << " (Playtime: " << (pt / 60) << " min played)";
+      if (pt > 0)
+        cout << " (Playtime: " << (pt / 60) << " min played)";
       if (games[i].igdb_id != 0) {
         cout << " [IGDB: " << games[i].igdb_id << "]";
       } else {
@@ -88,19 +91,25 @@ static void run_local_mode() {
     }
 
     const temp_GameEntry &selected = games[choice - 1];
-    
+
     while (true) {
       cout << "\n--- Game Details ---\n";
       cout << "Name: " << selected.name << "\n";
-      
-      std::string key = (selected.igdb_id != 0) ? "igdb_" + std::to_string(selected.igdb_id) : "local_" + make_canonical(selected.name);
+
+      std::string key = (selected.igdb_id != 0)
+                            ? "igdb_" + std::to_string(selected.igdb_id)
+                            : "local_" + make_canonical(selected.name);
       long long pt = get_playtime(key);
       cout << "Total Playtime: ";
-      if (pt > 0) cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
-      else cout << "Never played\n";
-      if (selected.igdb_id != 0) cout << "IGDB ID: " << selected.igdb_id << "\n";
-      else cout << "IGDB ID: Unrecognized\n";
-      
+      if (pt > 0)
+        cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
+      else
+        cout << "Never played\n";
+      if (selected.igdb_id != 0)
+        cout << "IGDB ID: " << selected.igdb_id << "\n";
+      else
+        cout << "IGDB ID: Unrecognized\n";
+
       cout << "Path: " << selected.gamePath.string() << "\n\n";
 
       cout << "  [1] Launch Game\n";
@@ -119,7 +128,7 @@ static void run_local_mode() {
         break;
       } else if (sub_choice == 1) {
         cout << "\nLaunching: " << selected.name << "...\n";
-        
+
         auto start_time = std::time(nullptr);
         int code = launchGame(selected.gamePath);
         auto end_time = std::time(nullptr);
@@ -127,7 +136,9 @@ static void run_local_mode() {
         if (code == 0 || code == -1) {
           if (end_time > start_time) {
             long long duration = end_time - start_time;
-            std::string key = (selected.igdb_id != 0) ? "igdb_" + std::to_string(selected.igdb_id) : "local_" + make_canonical(selected.name);
+            std::string key = (selected.igdb_id != 0)
+                                  ? "igdb_" + std::to_string(selected.igdb_id)
+                                  : "local_" + make_canonical(selected.name);
             record_play_session(key, selected.name, start_time, end_time);
             cout << "Recorded " << duration << " seconds of playtime.\n";
           }
@@ -155,11 +166,16 @@ static void run_steam_mode() {
     for (size_t i = 0; i < games.size(); ++i) {
       cout << "  [" << (i + 1) << "] " << games[i].name
            << " (AppID: " << games[i].appid << ")";
-      std::string key = (games[i].igdb_id != 0) ? "igdb_" + std::to_string(games[i].igdb_id) : "steam_" + std::to_string(games[i].appid);
+      std::string key = (games[i].igdb_id != 0)
+                            ? "igdb_" + std::to_string(games[i].igdb_id)
+                            : "steam_" + std::to_string(games[i].appid);
       long long pt = get_playtime(key);
-      if (pt > 0) cout << " [Playtime: " << (pt / 60) << " min played]";
-      if (games[i].igdb_id != 0) cout << " [IGDB: " << games[i].igdb_id << "]";
-      else cout << " [Unrecognized]";
+      if (pt > 0)
+        cout << " [Playtime: " << (pt / 60) << " min played]";
+      if (games[i].igdb_id != 0)
+        cout << " [IGDB: " << games[i].igdb_id << "]";
+      else
+        cout << " [Unrecognized]";
       cout << "\n";
     }
     cout << "  [0] Back\n\n";
@@ -184,16 +200,23 @@ static void run_steam_mode() {
 
     while (true) {
       cout << "\n--- Steam Game Details ---\n";
-      cout << "Name: " << selected.name << " (AppID: " << selected.appid << ")\n";
-      
-      std::string key = (selected.igdb_id != 0) ? "igdb_" + std::to_string(selected.igdb_id) : "steam_" + std::to_string(selected.appid);
+      cout << "Name: " << selected.name << " (AppID: " << selected.appid
+           << ")\n";
+
+      std::string key = (selected.igdb_id != 0)
+                            ? "igdb_" + std::to_string(selected.igdb_id)
+                            : "steam_" + std::to_string(selected.appid);
       long long pt = get_playtime(key);
       cout << "Total Playtime: ";
-      if (pt > 0) cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
-      else cout << "Never played\n";
-      if (selected.igdb_id != 0) cout << "IGDB ID: " << selected.igdb_id << "\n";
-      else cout << "IGDB ID: Unrecognized\n";
-      
+      if (pt > 0)
+        cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
+      else
+        cout << "Never played\n";
+      if (selected.igdb_id != 0)
+        cout << "IGDB ID: " << selected.igdb_id << "\n";
+      else
+        cout << "IGDB ID: Unrecognized\n";
+
       cout << "Install Dir: " << selected.installDir.string() << "\n\n";
 
       cout << "  [1] Launch Game\n";
@@ -212,29 +235,34 @@ static void run_steam_mode() {
         break;
       } else if (sub_choice == 1) {
         cout << "\nLaunching (Steam): " << selected.name << "...\n";
-        
+
         auto start_time = std::time(nullptr);
         if (!launch_steam_game_by_appid(selected.appid)) {
           cout << "[WARN] Failed to launch via Steam protocol.\n";
           break;
         }
 
-        // Wait a few seconds for Steam to process the request and spawn the game
+        // Wait a few seconds for Steam to process the request and spawn the
+        // game
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
         cout << "Monitoring process. Playtime is now recording...\n";
-        // Polling loop: checks every 2 seconds if any process in installDir is running
+        // Polling loop: checks every 2 seconds if any process in installDir is
+        // running
         while (is_game_running_in_dir(selected.installDir)) {
           std::this_thread::sleep_for(std::chrono::seconds(2));
         }
-        
+
         auto end_time = std::time(nullptr);
 
         if (end_time > start_time) {
           long long duration = end_time - start_time;
-          std::string key = (selected.igdb_id != 0) ? "igdb_" + std::to_string(selected.igdb_id) : "steam_" + std::to_string(selected.appid);
+          std::string key = (selected.igdb_id != 0)
+                                ? "igdb_" + std::to_string(selected.igdb_id)
+                                : "steam_" + std::to_string(selected.appid);
           record_play_session(key, selected.name, start_time, end_time);
-          cout << "Game closed. Recorded " << duration << " seconds of playtime.\n";
+          cout << "Game closed. Recorded " << duration
+               << " seconds of playtime.\n";
         }
         break; // Return to the main game list
       } else {
