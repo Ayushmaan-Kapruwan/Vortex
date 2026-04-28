@@ -260,3 +260,46 @@ int launchGame(const fs::path &gamePath) {
   
   return static_cast<int>(exitCode);
 }
+
+#include <tlhelp32.h>
+
+bool is_game_running_in_dir(const fs::path &installDir) {
+  if (installDir.empty()) return false;
+  
+  std::wstring dirStr = installDir.wstring();
+  if (dirStr.back() != L'\\' && dirStr.back() != L'/') {
+      dirStr += L'\\';
+  }
+  std::transform(dirStr.begin(), dirStr.end(), dirStr.begin(), ::towlower);
+
+  HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+
+  PROCESSENTRY32W pe32;
+  pe32.dwSize = sizeof(PROCESSENTRY32W);
+
+  bool found = false;
+
+  if (Process32FirstW(hSnapshot, &pe32)) {
+    do {
+      HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pe32.th32ProcessID);
+      if (hProcess) {
+        wchar_t pathBuf[MAX_PATH];
+        DWORD size = MAX_PATH;
+        if (QueryFullProcessImageNameW(hProcess, 0, pathBuf, &size)) {
+            std::wstring procPath = pathBuf;
+            std::transform(procPath.begin(), procPath.end(), procPath.begin(), ::towlower);
+            if (procPath.find(dirStr) == 0) { // starts with dirStr
+                found = true;
+                CloseHandle(hProcess);
+                break;
+            }
+        }
+        CloseHandle(hProcess);
+      }
+    } while (Process32NextW(hSnapshot, &pe32));
+  }
+
+  CloseHandle(hSnapshot);
+  return found;
+}

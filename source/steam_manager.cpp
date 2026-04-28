@@ -11,6 +11,8 @@
 #include <shellapi.h>
 #include <string>
 
+#include "igdb_manager.h"
+
 using std::string;
 using std::vector;
 
@@ -171,6 +173,9 @@ vector<SteamGame> read_installed_steam_games() {
 			if (extract_acf_field(acf, "installdir", installdir) && !installdir.empty()) {
 				g.installDir = lib / "steamapps" / "common" / installdir;
 			}
+
+			IgdbGameInfo info = igdb_resolve_game(g.name, false);
+			g.igdb_id = info.id;
 
 			games.push_back(std::move(g));
 		}

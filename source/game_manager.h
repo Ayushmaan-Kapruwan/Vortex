@@ -22,3 +22,4 @@ void scan_directory_for_games(const fs::path &gameDir,
 void sortGamesByName(std::vector<temp_GameEntry> &games);
 
 int launchGame(const fs::path &gamePath);
+bool is_game_running_in_dir(const fs::path &installDir);

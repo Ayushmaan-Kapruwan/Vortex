@@ -12,6 +12,7 @@ struct SteamGame {
 	fs::path libraryPath;
 	fs::path installDir;
 	fs::path manifestPath;
+	long long igdb_id = 0;
 };
 
 std::vector<SteamGame> read_installed_steam_games();

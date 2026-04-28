@@ -11,14 +11,35 @@
 #include <sstream>
 #include <unordered_map>
 #include <filesystem>
+#include <ctime>
+#include <iomanip>
 
 namespace fs = std::filesystem;
 
+struct StatEntry {
+    long long time = 0;
+    std::string name;
+};
+
 static const fs::path STATS_FILE_PATH = "playtime_stats.txt";
+static const fs::path SESSIONS_FILE_PATH = "playtime_sessions.log";
+
+static std::string format_time(std::time_t t) {
+    char buf[64];
+    std::tm tm_info;
+#ifdef _WIN32
+    localtime_s(&tm_info, &t);
+#else
+    tm_info = *std::localtime(&t);
+#endif
+    // Format: 2026-04-28 Tue 19:40:00
+    std::strftime(buf, sizeof(buf), "%Y-%m-%d %a %H:%M:%S", &tm_info);
+    return std::string(buf);
+}
 
 // Reads the playtime data from the file into an unordered_map
-static std::unordered_map<long long, long long> load_stats() {
-    std::unordered_map<long long, long long> stats;
+static std::unordered_map<std::string, StatEntry> load_stats() {
+    std::unordered_map<std::string, StatEntry> stats;
     if (!fs::exists(STATS_FILE_PATH)) {
         return stats;
     }
@@ -36,9 +57,21 @@ static std::unordered_map<long long, long long> load_stats() {
         auto pos = line.find('=');
         if (pos != std::string::npos) {
             try {
-                long long id = std::stoll(line.substr(0, pos));
-                long long time = std::stoll(line.substr(pos + 1));
-                stats[id] = time;
+                std::string key = line.substr(0, pos);
+                std::string rest = line.substr(pos + 1);
+                
+                long long time = 0;
+                std::string name;
+                
+                auto pipe_pos = rest.find('|');
+                if (pipe_pos != std::string::npos) {
+                    time = std::stoll(rest.substr(0, pipe_pos));
+                    name = rest.substr(pipe_pos + 1);
+                } else {
+                    time = std::stoll(rest);
+                }
+                
+                stats[key] = {time, name};
             } catch (...) {
                 // Ignore parsing errors for individual lines
             }
@@ -48,7 +81,7 @@ static std::unordered_map<long long, long long> load_stats() {
 }
 
 // Writes the playtime data from the unordered_map back to the file
-static void save_stats(const std::unordered_map<long long, long long>& stats) {
+static void save_stats(const std::unordered_map<std::string, StatEntry>& stats) {
     std::ofstream file(STATS_FILE_PATH, std::ios::trunc);
     if (!file.is_open()) {
         std::cerr << "[WARN] Failed to open " << STATS_FILE_PATH << " for writing.\n";
@@ -56,27 +89,50 @@ static void save_stats(const std::unordered_map<long long, long long>& stats) {
     }
 
     file << "# Vortex Playtime Stats\n";
-    file << "# Format: IGDB_ID=TOTAL_SECONDS\n";
-    for (const auto& [id, time] : stats) {
-        file << id << "=" << time << "\n";
+    file << "# Format: GAME_KEY=TOTAL_SECONDS|GAME_NAME\n";
+    for (const auto& [key, entry] : stats) {
+        file << key << "=" << entry.time;
+        if (!entry.name.empty()) {
+            file << "|" << entry.name;
+        }
+        file << "\n";
     }
 }
 
-void add_playtime(long long igdb_id, long long duration_seconds) {
-    if (igdb_id <= 0 || duration_seconds <= 0) return;
+void record_play_session(const std::string& game_key, const std::string& game_name, std::time_t start_time, std::time_t end_time) {
+    if (game_key.empty() || end_time <= start_time) return;
+    
+    long long duration_seconds = static_cast<long long>(end_time - start_time);
 
     auto stats = load_stats();
-    stats[igdb_id] += duration_seconds;
+    stats[game_key].time += duration_seconds;
+    if (!game_name.empty()) {
+        stats[game_key].name = game_name;
+    }
     save_stats(stats);
+
+    std::ofstream log_file(SESSIONS_FILE_PATH, std::ios::app);
+    if (log_file.is_open()) {
+        log_file.seekp(0, std::ios::end);
+        if (log_file.tellp() == 0) {
+            log_file << "# Vortex Playtime Sessions\n";
+            log_file << "# Format: GAME_KEY | GAME_NAME | DURATION_SEC | START_DATE | END_DATE\n";
+        }
+        log_file << game_key << " | "
+                 << (game_name.empty() ? "Unknown" : game_name) << " | "
+                 << duration_seconds << " | "
+                 << format_time(start_time) << " | "
+                 << format_time(end_time) << "\n";
+    }
 }
 
-long long get_playtime(long long igdb_id) {
-    if (igdb_id <= 0) return 0;
+long long get_playtime(const std::string& game_key) {
+    if (game_key.empty()) return 0;
     
     auto stats = load_stats();
-    auto it = stats.find(igdb_id);
+    auto it = stats.find(game_key);
     if (it != stats.end()) {
-        return it->second;
+        return it->second.time;
     }
     return 0;
 }

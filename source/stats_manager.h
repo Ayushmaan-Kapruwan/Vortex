@@ -1,8 +1,19 @@
 #pragma once
 
-// Adds duration_seconds to the total playtime for the given igdb_id.
-void add_playtime(long long igdb_id, long long duration_seconds);
+#include <string>
+#include <ctime>
 
-// Retrieves the total playtime in seconds for the given igdb_id.
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Records a complete play session, adds its duration to the total playtime, and appends to a log file.
+void record_play_session(const std::string& game_key, const std::string& game_name, std::time_t start_time, std::time_t end_time);
+
+// Retrieves the total playtime in seconds for the given game_key.
 // Returns 0 if no playtime has been recorded.
-long long get_playtime(long long igdb_id);
+long long get_playtime(const std::string& game_key);
+
+#ifdef __cplusplus
+}
+#endif
