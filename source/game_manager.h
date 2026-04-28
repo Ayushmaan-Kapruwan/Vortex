@@ -10,6 +10,7 @@ namespace fs = std::filesystem;
 struct temp_GameEntry {
   std::string name;  // Name of the game
   fs::path gamePath; // Path of the game executable
+  long long igdb_id = 0; // IGDB ID
 };
 
 std::string to_lower(std::string s);

@@ -4,6 +4,7 @@
 
 #include "game_manager.h"
 #include "steam_manager.h"
+#include "stats_manager.h"
 
 namespace fs = std::filesystem;
 
@@ -53,8 +54,16 @@ static void run_local_mode() {
   while (true) {
     cout << "\n=== Local Games ===\n";
     for (size_t i = 0; i < games.size(); ++i) {
-      cout << "  [" << (i + 1) << "] " << games[i].name << "  ("
-           << games[i].gamePath.string() << ")\n";
+      cout << "  [" << (i + 1) << "] " << games[i].name;
+      if (games[i].igdb_id != 0) {
+        long long pt = get_playtime(games[i].igdb_id);
+        if (pt > 0) {
+            cout << " (IGDB: " << games[i].igdb_id << " | " << (pt / 60) << " min played)";
+        } else {
+            cout << " (IGDB: " << games[i].igdb_id << ")";
+        }
+      }
+      cout << "  (" << games[i].gamePath.string() << ")\n";
     }
     cout << "  [0] Back\n\n";
 
@@ -75,14 +84,54 @@ static void run_local_mode() {
     }
 
     const temp_GameEntry &selected = games[choice - 1];
-    cout << "Launching: " << selected.name << "\n";
+    
+    while (true) {
+      cout << "\n--- Game Details ---\n";
+      cout << "Name: " << selected.name << "\n";
+      
+      if (selected.igdb_id != 0) {
+        long long pt = get_playtime(selected.igdb_id);
+        cout << "Total Playtime: ";
+        if (pt > 0) cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
+        else cout << "Never played\n";
+      }
+      
+      cout << "Path: " << selected.gamePath.string() << "\n\n";
 
-    int code = launchGame(selected.gamePath);
-    if (code == 0) {
-      std::time_t lastPlayed = std::time(nullptr);
-      cout << "Epoch seconds: " << lastPlayed << "\n";
-    } else {
-      cout << "[WARN] Process returned code: " << code << "\n";
+      cout << "  [1] Launch Game\n";
+      cout << "  [0] Back to List\n\n";
+      cout << "Enter selection: ";
+
+      int sub_choice = -1;
+      if (!(cin >> sub_choice)) {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Invalid input.\n";
+        continue;
+      }
+
+      if (sub_choice == 0) {
+        break;
+      } else if (sub_choice == 1) {
+        cout << "\nLaunching: " << selected.name << "...\n";
+        
+        auto start_time = std::time(nullptr);
+        int code = launchGame(selected.gamePath);
+        auto end_time = std::time(nullptr);
+
+        if (code == 0 || code == -1) {
+          if (selected.igdb_id != 0 && end_time > start_time) {
+            long long duration = end_time - start_time;
+            add_playtime(selected.igdb_id, duration);
+            cout << "Recorded " << duration << " seconds of playtime.\n";
+          }
+        } else {
+          cout << "[WARN] Process returned code: " << code << "\n";
+        }
+        break; // Return to the main game list after game closes
+      } else {
+        cout << "Invalid selection.\n";
+      }
     }
   }
 }

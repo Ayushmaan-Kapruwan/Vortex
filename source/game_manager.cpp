@@ -8,6 +8,10 @@
 #include <sstream>
 #include <system_error>
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
 using std::cerr;
 using std::string;
 using std::vector;
@@ -198,7 +202,9 @@ void scan_directory_for_games(const fs::path &gameDir,
 
     if (!bestPath.empty()) {
       temp_GameEntry g;
-      g.name = igdb_resolve_name(gameFolder.filename().string());
+      IgdbGameInfo info = igdb_resolve_game(gameFolder.filename().string());
+      g.name = info.name;
+      g.igdb_id = info.id;
       g.gamePath = fs::absolute(bestPath);
       outGames.push_back(std::move(g));
     }
@@ -213,7 +219,44 @@ void sortGamesByName(vector<temp_GameEntry> &games) {
 }
 
 int launchGame(const fs::path &gamePath) {
-  // Quote path to handle spaces
-  string command = "\"" + gamePath.string() + "\"";
-  return std::system(command.c_str());
+  std::wstring command = L"\"" + gamePath.wstring() + L"\"";
+  
+  STARTUPINFOW si;
+  PROCESS_INFORMATION pi;
+  
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  ZeroMemory(&pi, sizeof(pi));
+  
+  std::vector<wchar_t> cmdBuf(command.begin(), command.end());
+  cmdBuf.push_back(L'\0');
+
+  // Important: set the working directory to the game's folder
+  std::wstring workDir = gamePath.parent_path().wstring();
+  
+  if (!CreateProcessW(
+      NULL,
+      cmdBuf.data(),
+      NULL,
+      NULL,
+      FALSE,
+      0,
+      NULL,
+      workDir.c_str(),
+      &si,
+      &pi)) {
+      std::cerr << "[ERROR] CreateProcess failed. Error code: " << GetLastError() << "\n";
+      return -1;
+  }
+  
+  // Wait until child process exits.
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  
+  DWORD exitCode = 0;
+  GetExitCodeProcess(pi.hProcess, &exitCode);
+  
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+  
+  return static_cast<int>(exitCode);
 }

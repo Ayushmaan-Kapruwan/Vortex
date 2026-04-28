@@ -153,71 +153,94 @@ static bool igdb_fetch_token()
 
 // ---------- name extraction ---------------------------------
 
-// Extract one "name" value starting the search from position `from`.
-// Returns the name and advances `from` past it. Returns "" when no more.
-static string extract_name_at(const string& json, size_t& from)
+// Extract one game info object starting the search from position `from`.
+// Returns the info and advances `from` past the object. Returns empty string for name when no more.
+static IgdbGameInfo extract_info_at(const string& json, size_t& from)
 {
-    const string key = "\"name\"";
-    auto pos = json.find(key, from);
-    if (pos == string::npos) { from = string::npos; return ""; }
-    from = pos + key.size();
-
-    // skip whitespace, then ':'
-    while (from < json.size() && json[from] == ' ') ++from;
-    if (from >= json.size() || json[from] != ':') { from = string::npos; return ""; }
-    ++from;
-    // skip whitespace, then opening '"'
-    while (from < json.size() && json[from] == ' ') ++from;
-    if (from >= json.size() || json[from] != '"') { from = string::npos; return ""; }
-    ++from;
-
-    string name;
-    bool escaped = false;
-    for (; from < json.size(); ++from) {
-        char c = json[from];
-        if (escaped) { name += c; escaped = false; }
-        else if (c == '\\') { escaped = true; }
-        else if (c == '"') { ++from; break; }
-        else { name += c; }
+    IgdbGameInfo info;
+    
+    auto start_obj = json.find('{', from);
+    if (start_obj == string::npos) { from = string::npos; return info; }
+    
+    auto end_obj = json.find('}', start_obj);
+    if (end_obj == string::npos) { from = string::npos; return info; }
+    
+    from = end_obj + 1;
+    string obj = json.substr(start_obj, end_obj - start_obj);
+    
+    // Extract "id"
+    auto id_pos = obj.find("\"id\"");
+    if (id_pos != string::npos) {
+        id_pos += 4;
+        while (id_pos < obj.size() && (obj[id_pos] == ' ' || obj[id_pos] == ':')) id_pos++;
+        long long id = 0;
+        while (id_pos < obj.size() && std::isdigit((unsigned char)obj[id_pos])) {
+            id = id * 10 + (obj[id_pos] - '0');
+            id_pos++;
+        }
+        info.id = id;
     }
-    return name;
+    
+    // Extract "name"
+    auto name_pos = obj.find("\"name\"");
+    if (name_pos != string::npos) {
+        name_pos += 6;
+        while (name_pos < obj.size() && (obj[name_pos] == ' ' || obj[name_pos] == ':')) name_pos++;
+        if (name_pos < obj.size() && obj[name_pos] == '"') {
+            name_pos++;
+            bool escaped = false;
+            for (; name_pos < obj.size(); ++name_pos) {
+                char c = obj[name_pos];
+                if (escaped) { info.name += c; escaped = false; }
+                else if (c == '\\') { escaped = true; }
+                else if (c == '"') { break; }
+                else { info.name += c; }
+            }
+        }
+    }
+    
+    return info;
 }
 
 // Walk all "name" fields in the response.
 // Priority:
 //   1. Canonical exact match  (alphanumeric-only, lowercase)
 //   2. First result as fallback
-static string extract_best_name(const string& json, const string& query)
+static IgdbGameInfo extract_best_info(const string& json, const string& query)
 {
     const string queryCanon = make_canonical(query);
-    string first;
+    IgdbGameInfo first;
     size_t cursor = 0;
 
     while (cursor != string::npos) {
-        string name = extract_name_at(json, cursor);
-        if (name.empty()) break;
-        if (first.empty()) first = name;
-        if (make_canonical(name) == queryCanon)
-            return name;   // canonical match — wins immediately
+        IgdbGameInfo info = extract_info_at(json, cursor);
+        if (info.name.empty()) break;
+        if (first.name.empty()) first = info;
+        if (make_canonical(info.name) == queryCanon)
+            return info;   // canonical match — wins immediately
     }
     return first;          // no canonical match — best guess is first result
 }
 
 // ---------- public API --------------------------------------
 
-std::string igdb_resolve_name(const std::string& folderName)
+IgdbGameInfo igdb_resolve_game(const std::string& folderName)
 {
+    IgdbGameInfo fallback;
+    fallback.name = folderName;
+    fallback.id = 0;
+
     // Guard: no credentials
     const string client_id = IGDB_CLIENT_ID;
     if (client_id.empty()) {
         cerr << "[IGDB] No credentials set — skipping lookup.\n";
-        return folderName;
+        return fallback;
     }
 
     // Fetch token once per process
     if (s_access_token.empty()) {
         if (!igdb_fetch_token())
-            return folderName;
+            return fallback;
     }
 
     // Build query body (Apicalypse syntax)
@@ -226,7 +249,7 @@ std::string igdb_resolve_name(const std::string& folderName)
     for (size_t i = 0; i < safe.size(); ++i)
         if (safe[i] == '"') { safe.insert(i, "\\"); ++i; }
 
-    const string body = "search \"" + safe + "\"; fields name; limit 5;";
+    const string body = "search \"" + safe + "\"; fields id, name; limit 5;";
 
     // Build headers
     const wstring headers =
@@ -240,14 +263,14 @@ std::string igdb_resolve_name(const std::string& folderName)
         resp = https_post(L"api.igdb.com", L"/v4/games", headers, body);
     } catch (const std::exception& e) {
         cerr << "[IGDB] API call failed: " << e.what() << "\n";
-        return folderName;
+        return fallback;
     }
 
     cerr << "[IGDB] Raw response for \"" << folderName << "\": " << resp << "\n";
 
-    string resolved = extract_best_name(resp, folderName);
+    IgdbGameInfo resolved = extract_best_info(resp, folderName);
 
-    if (resolved.empty()) {
+    if (resolved.name.empty()) {
         // No match — ask the user
         cout << "\n[IGDB] No match found for \"" << folderName << "\"\n";
         cout << "  [1] Keep folder name\n";
@@ -262,12 +285,14 @@ std::string igdb_resolve_name(const std::string& folderName)
             cout << "Enter name: ";
             string manual;
             std::getline(std::cin, manual);
-            if (!manual.empty())
-                return manual;
+            if (!manual.empty()) {
+                fallback.name = manual;
+                return fallback;
+            }
         }
-        return folderName;
+        return fallback;
     }
 
-    cerr << "[IGDB] \"" << folderName << "\" -> \"" << resolved << "\"\n";
+    cerr << "[IGDB] \"" << folderName << "\" -> \"" << resolved.name << "\" (ID: " << resolved.id << ")\n";
     return resolved;
 }
