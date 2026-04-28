@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "args": [],
+      "stopAtEntry": false,
+      "console": "externalTerminal",
+      "cwd": "d:/Projects/Minor/Vortex/source",
+      "program": "d:/Projects/Minor/Vortex/source/build/Debug/outDebug"
+    }
+  ]
+}
