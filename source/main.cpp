@@ -5,6 +5,7 @@
 #include "game_manager.h"
 #include "igdb_manager.h"
 #include "metadata_manager.h"
+#include "preference_manager.h"
 #include "stats_manager.h"
 #include "steam_manager.h"
 
@@ -60,6 +61,12 @@ static void run_local_mode() {
     cout << "\n=== Local Games ===\n";
     for (size_t i = 0; i < games.size(); ++i) {
       cout << "  [" << (i + 1) << "] " << games[i].name;
+      
+      double pref = get_game_preference(games[i].name);
+      if (pref != 0.0) {
+          cout << " [" << (pref > 0 ? "+" : "") << pref << "]";
+      }
+
       std::string key = (games[i].igdb_id != 0)
                             ? "igdb_" + std::to_string(games[i].igdb_id)
                             : "local_" + make_canonical(games[i].name);
@@ -143,6 +150,8 @@ static void run_local_mode() {
       cout << "Path: " << selected.gamePath.string() << "\n\n";
 
       cout << "  [1] Launch Game\n";
+      cout << "  [2] Like\n";
+      cout << "  [3] Dislike\n";
       cout << "  [0] Back to List\n\n";
       cout << "Enter selection: ";
 
@@ -156,6 +165,16 @@ static void run_local_mode() {
 
       if (sub_choice == 0) {
         break;
+      } else if (sub_choice == 2) {
+          double new_pref = toggle_game_preference(selected.name, 1.0);
+          if (new_pref > 0) cout << "[✓] " << selected.name << " -> +1.0 (Liked)\n";
+          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
+          continue;
+      } else if (sub_choice == 3) {
+          double new_pref = toggle_game_preference(selected.name, -1.0);
+          if (new_pref < 0) cout << "[✓] " << selected.name << " -> -1.0 (Disliked)\n";
+          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
+          continue;
       } else if (sub_choice == 1) {
         cout << "\nLaunching: " << selected.name << "...\n";
 
@@ -194,14 +213,19 @@ static void run_steam_mode() {
   while (true) {
     cout << "\n=== Steam Games ===\n";
     for (size_t i = 0; i < games.size(); ++i) {
-      cout << "  [" << (i + 1) << "] " << games[i].name
-           << " (AppID: " << games[i].appid << ")";
+      cout << "  [" << (i + 1) << "] " << games[i].name;
+
+      double pref = get_game_preference(games[i].name);
+      if (pref != 0.0) {
+          cout << " [" << (pref > 0 ? "+" : "") << pref << "]";
+      }
+
       std::string key = (games[i].igdb_id != 0)
                             ? "igdb_" + std::to_string(games[i].igdb_id)
                             : "steam_" + std::to_string(games[i].appid);
       long long pt = get_playtime(key);
       if (pt > 0)
-        cout << " [Playtime: " << (pt / 60) << " min played]";
+        cout << " (Playtime: " << (pt / 60) << " min played)";
       if (games[i].igdb_id != 0)
         cout << " [IGDB: " << games[i].igdb_id << "]";
       else
@@ -279,20 +303,33 @@ static void run_steam_mode() {
       cout << "Install Dir: " << selected.installDir.string() << "\n\n";
 
       cout << "  [1] Launch Game\n";
+      cout << "  [2] Like\n";
+      cout << "  [3] Dislike\n";
       cout << "  [0] Back to List\n\n";
       cout << "Enter selection: ";
 
-      int sub_choice = -1;
-      if (!(cin >> sub_choice)) {
+      int action = -1;
+      if (!(cin >> action)) {
         cin.clear();
         cin.ignore(10000, '\n');
         cout << "Invalid input.\n";
         continue;
       }
 
-      if (sub_choice == 0) {
+      if (action == 0)
         break;
-      } else if (sub_choice == 1) {
+      
+      if (action == 2) {
+          double new_pref = toggle_game_preference(selected.name, 1.0);
+          if (new_pref > 0) cout << "[✓] " << selected.name << " -> +1.0 (Liked)\n";
+          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
+          continue;
+      } else if (action == 3) {
+          double new_pref = toggle_game_preference(selected.name, -1.0);
+          if (new_pref < 0) cout << "[✓] " << selected.name << " -> -1.0 (Disliked)\n";
+          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
+          continue;
+      } else if (action == 1) {
         cout << "\nLaunching (Steam): " << selected.name << "...\n";
 
         auto start_time = std::time(nullptr);
