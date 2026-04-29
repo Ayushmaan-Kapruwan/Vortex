@@ -278,6 +278,39 @@ static IgdbGameInfo extract_info_at(const string &json, size_t &from) {
     }
   }
 
+  // Extract "genres"
+  auto genres_pos = obj.find("\"genres\"");
+  if (genres_pos != string::npos) {
+      size_t curr = genres_pos;
+      auto genres_end = obj.find(']', curr);
+      if (genres_end == string::npos) genres_end = obj.size();
+      while (curr < genres_end) {
+          auto g_name_pos = obj.find("\"name\"", curr);
+          if (g_name_pos == string::npos || g_name_pos > genres_end) break;
+          auto colon = obj.find(':', g_name_pos);
+          if (colon != string::npos) {
+              size_t val_pos = colon + 1;
+              while (val_pos < obj.size() && obj[val_pos] == ' ') val_pos++;
+              if (val_pos < obj.size() && obj[val_pos] == '"') {
+                  val_pos++;
+                  bool escaped = false;
+                  std::string genre_name = "";
+                  for (; val_pos < obj.size(); ++val_pos) {
+                      char c = obj[val_pos];
+                      if (escaped) { genre_name += c; escaped = false; }
+                      else if (c == '\\') { escaped = true; }
+                      else if (c == '"') { break; }
+                      else { genre_name += c; }
+                  }
+                  if (!genre_name.empty()) {
+                      info.genres.push_back(genre_name);
+                  }
+              }
+          }
+          curr = g_name_pos + 6;
+      }
+  }
+
   // Extract "time_to_beat"
   auto ttb_pos = obj.find("\"game_time_to_beats\"");
   if (ttb_pos != string::npos) {
@@ -417,6 +450,7 @@ static void save_to_cache(const std::string &query, const IgdbGameInfo &info) {
   meta.developer = info.developer;
   meta.rating = info.rating;
   meta.time_to_beat_seconds = info.time_to_beat_seconds;
+  meta.all_genres = info.genres;
 
   if (info.id > 0) {
       string ttb_body = "where game_id = " + std::to_string(info.id) + "; fields normally;";
@@ -486,8 +520,6 @@ IgdbGameInfo igdb_resolve_game(const std::string &folderName,
       ++i;
     }
 
-  const string body = "search \"" + safe + "\"; fields id, name, total_rating, involved_companies.company.name, involved_companies.developer; limit 5;";
-
   // Build headers
   const wstring headers =
       L"Client-ID: " + wstring(client_id.begin(), client_id.end()) + L"\r\n" +
@@ -495,19 +527,34 @@ IgdbGameInfo igdb_resolve_game(const std::string &folderName,
       wstring(s_access_token.begin(), s_access_token.end()) + L"\r\n" +
       L"Content-Type: text/plain";
 
+  // First pass: Case-insensitive substring match. 
+  // This bypasses IGDB's popularity bias which buries exact generic matches (like "The Finals") under blockbusters (like "Final Fantasy").
+  const string exact_body = "where name ~ *\"" + safe + "\"*; fields id, name, total_rating, involved_companies.company.name, involved_companies.developer, genres.name; limit 50;";
   string resp;
   try {
-    resp = https_post(L"api.igdb.com", L"/v4/games", headers, body);
+    resp = https_post(L"api.igdb.com", L"/v4/games", headers, exact_body);
   } catch (const std::exception &e) {
     cerr << "[IGDB] API call failed: " << e.what() << "\n";
     save_to_cache(folderName, fallback);
     return fallback;
   }
 
-  // cerr << "[IGDB] Raw response for \"" << folderName << "\": " << resp <<
-  // "\n";
-
   IgdbGameInfo resolved = extract_best_info(resp, folderName);
+
+  // Second pass: Fuzzy search fallback.
+  // If the exact substring match didn't yield a perfect canonical match (e.g. acronyms like "GTAV"), use the fuzzy engine.
+  if (resolved.name.empty() || make_canonical(resolved.name) != make_canonical(folderName)) {
+      const string fuzzy_body = "search \"" + safe + "\"; fields id, name, total_rating, involved_companies.company.name, involved_companies.developer, genres.name; limit 50;";
+      try {
+          string fuzzy_resp = https_post(L"api.igdb.com", L"/v4/games", headers, fuzzy_body);
+          IgdbGameInfo fuzzy_best = extract_best_info(fuzzy_resp, folderName);
+          
+          // If fuzzy found a canonical match, use it. Or if first pass found nothing at all, use fuzzy's best guess.
+          if (make_canonical(fuzzy_best.name) == make_canonical(folderName) || resolved.name.empty()) {
+              resolved = fuzzy_best;
+          }
+      } catch (...) {}
+  }
 
   if (resolved.name.empty()) {
     if (!interactive) {

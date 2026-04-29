@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 struct IgdbGameInfo {
     std::string name;
@@ -8,6 +9,7 @@ struct IgdbGameInfo {
     std::string developer = "Unknown";
     double rating = 0.0;
     long long time_to_beat_seconds = 0;
+    std::vector<std::string> genres;
 };
 
 // Queries the IGDB API and returns the canonical game name and ID for the given

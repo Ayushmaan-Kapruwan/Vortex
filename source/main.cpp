@@ -116,6 +116,26 @@ static void run_local_mode() {
         } else {
           cout << "Time to Beat: N/A\n";
         }
+        
+        cout << "Genres: ";
+        if (!meta.all_genres.empty()) {
+            for (size_t i = 0; i < meta.all_genres.size(); ++i) {
+                cout << meta.all_genres[i] << (i + 1 < meta.all_genres.size() ? ", " : "");
+            }
+            cout << "\n";
+        } else {
+            cout << "Unknown\n";
+        }
+        
+        cout << "[ML] Main Genres: ";
+        if (!meta.main_genres.empty()) {
+            for (size_t i = 0; i < meta.main_genres.size(); ++i) {
+                cout << meta.main_genres[i] << (i + 1 < meta.main_genres.size() ? ", " : "");
+            }
+            cout << "\n";
+        } else {
+            cout << "Unknown\n";
+        }
       } else {
         cout << "IGDB ID: Unrecognized\n";
       }
@@ -231,6 +251,26 @@ static void run_steam_mode() {
           cout << "Time to Beat: " << (meta.time_to_beat_seconds / 3600) << " hours\n";
         } else {
           cout << "Time to Beat: N/A\n";
+        }
+
+        cout << "Genres: ";
+        if (!meta.all_genres.empty()) {
+            for (size_t i = 0; i < meta.all_genres.size(); ++i) {
+                cout << meta.all_genres[i] << (i + 1 < meta.all_genres.size() ? ", " : "");
+            }
+            cout << "\n";
+        } else {
+            cout << "Unknown\n";
+        }
+        
+        cout << "[ML] Main Genres: ";
+        if (!meta.main_genres.empty()) {
+            for (size_t i = 0; i < meta.main_genres.size(); ++i) {
+                cout << meta.main_genres[i] << (i + 1 < meta.main_genres.size() ? ", " : "");
+            }
+            cout << "\n";
+        } else {
+            cout << "Unknown\n";
         }
       } else {
         cout << "IGDB ID: Unrecognized\n";
