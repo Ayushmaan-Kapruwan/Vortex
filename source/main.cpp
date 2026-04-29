@@ -4,6 +4,7 @@
 
 #include "game_manager.h"
 #include "igdb_manager.h"
+#include "metadata_manager.h"
 #include "stats_manager.h"
 #include "steam_manager.h"
 
@@ -105,10 +106,19 @@ static void run_local_mode() {
         cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
       else
         cout << "Never played\n";
-      if (selected.igdb_id != 0)
+      if (selected.igdb_id != 0) {
         cout << "IGDB ID: " << selected.igdb_id << "\n";
-      else
+        GameMetadata meta = get_game_metadata(selected.igdb_id);
+        cout << "Developer: " << meta.developer << "\n";
+        cout << "Rating: " << (meta.rating > 0 ? std::to_string(meta.rating) : "N/A") << "\n";
+        if (meta.time_to_beat_seconds > 0) {
+          cout << "Time to Beat: " << (meta.time_to_beat_seconds / 3600) << " hours\n";
+        } else {
+          cout << "Time to Beat: N/A\n";
+        }
+      } else {
         cout << "IGDB ID: Unrecognized\n";
+      }
 
       cout << "Path: " << selected.gamePath.string() << "\n\n";
 
@@ -212,10 +222,19 @@ static void run_steam_mode() {
         cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
       else
         cout << "Never played\n";
-      if (selected.igdb_id != 0)
+      if (selected.igdb_id != 0) {
         cout << "IGDB ID: " << selected.igdb_id << "\n";
-      else
+        GameMetadata meta = get_game_metadata(selected.igdb_id);
+        cout << "Developer: " << meta.developer << "\n";
+        cout << "Rating: " << (meta.rating > 0 ? std::to_string(meta.rating) : "N/A") << "\n";
+        if (meta.time_to_beat_seconds > 0) {
+          cout << "Time to Beat: " << (meta.time_to_beat_seconds / 3600) << " hours\n";
+        } else {
+          cout << "Time to Beat: N/A\n";
+        }
+      } else {
         cout << "IGDB ID: Unrecognized\n";
+      }
 
       cout << "Install Dir: " << selected.installDir.string() << "\n\n";
 

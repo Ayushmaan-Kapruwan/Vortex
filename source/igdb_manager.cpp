@@ -8,6 +8,7 @@
 
 #include "igdb_manager.h"
 #include "game_manager.h"
+#include "metadata_manager.h"
 
 // ---- Paste your credentials here ---------------------------
 #define IGDB_CLIENT_ID "8i3kzr158vqp06bs77j20x0j5mril4" // e.g. "abc123xyz"
@@ -178,41 +179,73 @@ static IgdbGameInfo extract_info_at(const string &json, size_t &from) {
     return info;
   }
 
-  auto end_obj = json.find('}', start_obj);
-  if (end_obj == string::npos) {
-    from = string::npos;
-    return info;
+  size_t end_obj = start_obj + 1;
+  int brace_count = 1;
+  bool in_str = false;
+  while (end_obj < json.size() && brace_count > 0) {
+      if (json[end_obj] == '"' && json[end_obj-1] != '\\') in_str = !in_str;
+      if (!in_str) {
+          if (json[end_obj] == '{') brace_count++;
+          else if (json[end_obj] == '}') brace_count--;
+      }
+      end_obj++;
+  }
+  if (brace_count > 0) {
+      from = string::npos;
+      return info;
   }
 
-  from = end_obj + 1;
+  from = end_obj;
   string obj = json.substr(start_obj, end_obj - start_obj);
 
+  string root_obj = obj;
+  int depth = 0;
+  in_str = false;
+  for (size_t i = 1; i + 1 < root_obj.size(); ++i) {
+      if (root_obj[i] == '"' && root_obj[i-1] != '\\') in_str = !in_str;
+      if (!in_str) {
+          if (root_obj[i] == '{' || root_obj[i] == '[') {
+              depth++;
+              root_obj[i] = ' ';
+          }
+          else if (root_obj[i] == '}' || root_obj[i] == ']') {
+              depth--;
+              root_obj[i] = ' ';
+          }
+          else if (depth > 0) {
+              root_obj[i] = ' ';
+          }
+      } else if (depth > 0) {
+          root_obj[i] = ' ';
+      }
+  }
+
   // Extract "id"
-  auto id_pos = obj.find("\"id\"");
+  auto id_pos = root_obj.find("\"id\"");
   if (id_pos != string::npos) {
     id_pos += 4;
-    while (id_pos < obj.size() && (obj[id_pos] == ' ' || obj[id_pos] == ':'))
+    while (id_pos < root_obj.size() && (root_obj[id_pos] == ' ' || root_obj[id_pos] == ':'))
       id_pos++;
     long long id = 0;
-    while (id_pos < obj.size() && std::isdigit((unsigned char)obj[id_pos])) {
-      id = id * 10 + (obj[id_pos] - '0');
+    while (id_pos < root_obj.size() && std::isdigit((unsigned char)root_obj[id_pos])) {
+      id = id * 10 + (root_obj[id_pos] - '0');
       id_pos++;
     }
     info.id = id;
   }
 
   // Extract "name"
-  auto name_pos = obj.find("\"name\"");
+  auto name_pos = root_obj.find("\"name\"");
   if (name_pos != string::npos) {
     name_pos += 6;
-    while (name_pos < obj.size() &&
-           (obj[name_pos] == ' ' || obj[name_pos] == ':'))
+    while (name_pos < root_obj.size() &&
+           (root_obj[name_pos] == ' ' || root_obj[name_pos] == ':'))
       name_pos++;
-    if (name_pos < obj.size() && obj[name_pos] == '"') {
+    if (name_pos < root_obj.size() && root_obj[name_pos] == '"') {
       name_pos++;
       bool escaped = false;
-      for (; name_pos < obj.size(); ++name_pos) {
-        char c = obj[name_pos];
+      for (; name_pos < root_obj.size(); ++name_pos) {
+        char c = root_obj[name_pos];
         if (escaped) {
           info.name += c;
           escaped = false;
@@ -225,6 +258,83 @@ static IgdbGameInfo extract_info_at(const string &json, size_t &from) {
         }
       }
     }
+  }
+
+  // Extract "rating"
+  auto rating_pos = root_obj.find("\"rating\"");
+  if (rating_pos == string::npos) rating_pos = root_obj.find("\"total_rating\"");
+  if (rating_pos != string::npos) {
+    auto colon = root_obj.find(':', rating_pos);
+    if (colon != string::npos) {
+        rating_pos = colon + 1;
+        while (rating_pos < root_obj.size() && root_obj[rating_pos] == ' ') rating_pos++;
+        std::string num;
+        while (rating_pos < root_obj.size() && (std::isdigit((unsigned char)root_obj[rating_pos]) || root_obj[rating_pos] == '.')) {
+            num += root_obj[rating_pos++];
+        }
+        if (!num.empty()) {
+            try { info.rating = std::stod(num); } catch (...) {}
+        }
+    }
+  }
+
+  // Extract "time_to_beat"
+  auto ttb_pos = obj.find("\"game_time_to_beats\"");
+  if (ttb_pos != string::npos) {
+      auto normally_pos = obj.find("\"normally\"", ttb_pos);
+      if (normally_pos != string::npos) {
+          auto colon = obj.find(':', normally_pos);
+          if (colon != string::npos) {
+              normally_pos = colon + 1;
+              while (normally_pos < obj.size() && obj[normally_pos] == ' ') normally_pos++;
+              std::string num;
+              while (normally_pos < obj.size() && std::isdigit((unsigned char)obj[normally_pos])) {
+                  num += obj[normally_pos++];
+              }
+              if (!num.empty()) {
+                  try { info.time_to_beat_seconds = std::stoll(num); } catch (...) {}
+              }
+          }
+      }
+  }
+
+  // Extract "developer"
+  auto comp_pos = obj.find("\"involved_companies\"");
+  if (comp_pos != string::npos) {
+      size_t curr = comp_pos;
+      while (true) {
+          auto dev_flag = obj.find("\"developer\"", curr);
+          if (dev_flag == string::npos) break;
+          auto val_pos = obj.find(':', dev_flag);
+          if (val_pos != string::npos) {
+              val_pos++;
+              while (val_pos < obj.size() && obj[val_pos] == ' ') val_pos++;
+              if (val_pos + 4 <= obj.size() && obj.substr(val_pos, 4) == "true") {
+                  auto comp_name = obj.rfind("\"name\"", dev_flag);
+                  if (comp_name != string::npos && comp_name > comp_pos) {
+                      auto colon = obj.find(':', comp_name);
+                      if (colon != string::npos) {
+                          comp_name = colon + 1;
+                          while (comp_name < obj.size() && obj[comp_name] == ' ') comp_name++;
+                          if (comp_name < obj.size() && obj[comp_name] == '"') {
+                              comp_name++;
+                              bool escaped = false;
+                              info.developer = "";
+                              for (; comp_name < obj.size(); ++comp_name) {
+                                  char c = obj[comp_name];
+                                  if (escaped) { info.developer += c; escaped = false; }
+                                  else if (c == '\\') { escaped = true; }
+                                  else if (c == '"') { break; }
+                                  else { info.developer += c; }
+                              }
+                              break;
+                          }
+                      }
+                  }
+              }
+          }
+          curr = dev_flag + 11;
+      }
   }
 
   return info;
@@ -301,6 +411,40 @@ static void save_to_cache(const std::string &query, const IgdbGameInfo &info) {
     }
     file << query << "=" << info.id << "|" << info.name << "\n";
   }
+
+  GameMetadata meta;
+  meta.igdb_id = info.id;
+  meta.developer = info.developer;
+  meta.rating = info.rating;
+  meta.time_to_beat_seconds = info.time_to_beat_seconds;
+
+  if (info.id > 0) {
+      string ttb_body = "where game_id = " + std::to_string(info.id) + "; fields normally;";
+      try {
+          string ttb_resp = https_post(L"api.igdb.com", L"/v4/game_time_to_beats", 
+              L"Client-ID: " + wstring(IGDB_CLIENT_ID, IGDB_CLIENT_ID + strlen(IGDB_CLIENT_ID)) + L"\r\n" +
+              L"Authorization: Bearer " + wstring(s_access_token.begin(), s_access_token.end()) + L"\r\n" +
+              L"Content-Type: text/plain", ttb_body);
+          
+          auto norm_pos = ttb_resp.find("\"normally\"");
+          if (norm_pos != string::npos) {
+              auto colon = ttb_resp.find(':', norm_pos);
+              if (colon != string::npos) {
+                  size_t val_pos = colon + 1;
+                  while (val_pos < ttb_resp.size() && ttb_resp[val_pos] == ' ') val_pos++;
+                  string num;
+                  while (val_pos < ttb_resp.size() && std::isdigit((unsigned char)ttb_resp[val_pos])) {
+                      num += ttb_resp[val_pos++];
+                  }
+                  if (!num.empty()) {
+                      try { meta.time_to_beat_seconds = std::stoll(num); } catch (...) {}
+                  }
+              }
+          }
+      } catch (...) {}
+  }
+
+  save_game_metadata(meta);
 }
 
 // ---------- public API --------------------------------------
@@ -342,7 +486,7 @@ IgdbGameInfo igdb_resolve_game(const std::string &folderName,
       ++i;
     }
 
-  const string body = "search \"" + safe + "\"; fields id, name; limit 5;";
+  const string body = "search \"" + safe + "\"; fields id, name, total_rating, involved_companies.company.name, involved_companies.developer; limit 5;";
 
   // Build headers
   const wstring headers =

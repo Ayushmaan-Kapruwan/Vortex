@@ -3,8 +3,11 @@
 #include <string>
 
 struct IgdbGameInfo {
-  std::string name;
-  long long id = 0;
+    std::string name;
+    long long id = 0;
+    std::string developer = "Unknown";
+    double rating = 0.0;
+    long long time_to_beat_seconds = 0;
 };
 
 // Queries the IGDB API and returns the canonical game name and ID for the given
