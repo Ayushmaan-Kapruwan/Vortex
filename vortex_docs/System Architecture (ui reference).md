@@ -59,7 +59,7 @@ graph TD
 
 - **Role:** Stores the game's metdata in the following fields -
   
-  IGDB_ID=Developer|Rating|Time_To_Beat_Seconds
+  IGDB_ID=Developer|Rating|Time_To_Beat_Seconds|All_Genres|Main_Genres(for ML use)
 
 	Metadata is stored in game_metadata.txt
 
