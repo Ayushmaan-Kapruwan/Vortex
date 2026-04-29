@@ -44,7 +44,7 @@ Current game launchers operate in isolation, offering no unified view of a user'
 Our users deserve a single application that:
 - Aggregates all their games regardless of platform
 - Provides meaningful insights into their gaming habits
-- Recommends games based on current mood and context, not just past purchases
+	- Recommends games based on current mood and context, not just past purchases
 
 ---
 
@@ -271,6 +271,18 @@ In the initial stage we just ask the user on first setup of the launcher applica
 2. Adventure
 3. Simulator
 4. RPG
+5. Platform
+6. Puzzle
+7. Fighting
+8. Racing
+9. Visual Novel
+10. Indie
+
+| Mood           | Genres                                            |
+| -------------- | ------------------------------------------------- |
+| 😌 Relaxed     | Simulator, Puzzle, Adventure, Visual Novel, Indie |
+| 🎯 Competitive | Shooter, Fighting, Racing                         |
+| 📖 Immersive   | Role-playing (RPG), Adventure, Visual Novel       |
 
 ##### IGDB API (Metadata source) <sup> [[#^c03d51|1]] </sup>
 
@@ -634,7 +646,7 @@ In the initial stage we just ask the user on first setup of the launcher applica
 
 #### PERT Chart
 
-![[image-3.png|935x235]]
+![[image-3 1.png|935x235]]
 
 ---
 
