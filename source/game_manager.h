@@ -10,6 +10,7 @@ namespace fs = std::filesystem;
 struct temp_GameEntry {
   std::string name;  // Name of the game
   fs::path gamePath; // Path of the game executable
+  fs::path installDir; // Path to the game's root installation folder
   long long igdb_id = 0; // IGDB ID
 };
 

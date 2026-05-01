@@ -206,6 +206,7 @@ void scan_directory_for_games(const fs::path &gameDir,
       g.name = info.name;
       g.igdb_id = info.id;
       g.gamePath = fs::absolute(bestPath);
+      g.installDir = fs::absolute(gameFolder);
       outGames.push_back(std::move(g));
     }
   }

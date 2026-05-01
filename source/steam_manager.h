@@ -17,3 +17,4 @@ struct SteamGame {
 
 std::vector<SteamGame> read_installed_steam_games();
 bool launch_steam_game_by_appid(int appid);
+bool uninstall_steam_game_by_appid(int appid);

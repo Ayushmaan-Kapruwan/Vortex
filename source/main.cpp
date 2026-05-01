@@ -37,31 +37,73 @@ static UserMood ask_user_mood() {
     return static_cast<UserMood>(choice);
   }
 }
+enum class GameSource { Steam, Local };
 
-static void run_local_mode() {
+struct UnifiedGame {
+    GameSource source = GameSource::Local;
+    std::string name;
+    long long igdb_id = 0;
+    fs::path installDir;
+    int appid = 0;
+    fs::path gamePath;
+};
+
+static std::vector<UnifiedGame> get_local_games() {
+  std::vector<temp_GameEntry> localGames;
   fs::path gameDir1 = "E:\\Games";
   fs::path gameDir2 = "D:\\Games";
+  scan_directory_for_games(gameDir1, localGames);
+  scan_directory_for_games(gameDir2, localGames);
+  
+  std::vector<UnifiedGame> games;
+  games.reserve(localGames.size());
+  for (const auto& g : localGames) {
+      UnifiedGame ug;
+      ug.source = GameSource::Local;
+      ug.name = g.name;
+      ug.igdb_id = g.igdb_id;
+      ug.installDir = g.installDir;
+      ug.gamePath = g.gamePath;
+      games.push_back(std::move(ug));
+  }
+  return games;
+}
 
-  std::vector<temp_GameEntry> games;
-  games.reserve(256);
+static std::vector<UnifiedGame> get_steam_games() {
+  std::vector<SteamGame> steamGames = read_installed_steam_games();
+  std::vector<UnifiedGame> games;
+  games.reserve(steamGames.size());
+  for (const auto& g : steamGames) {
+      UnifiedGame ug;
+      ug.source = GameSource::Steam;
+      ug.name = g.name;
+      ug.igdb_id = g.igdb_id;
+      ug.installDir = g.installDir;
+      ug.appid = g.appid;
+      games.push_back(std::move(ug));
+  }
+  return games;
+}
 
-  scan_directory_for_games(gameDir1, games);
-  scan_directory_for_games(gameDir2, games);
-
+static void run_games_menu(std::vector<UnifiedGame>& games, const std::string& menu_title) {
   if (games.empty()) {
-    cout << "No local games found.\n";
-    cout << "  - " << gameDir1 << "\n";
-    cout << "  - " << gameDir2 << "\n";
+    cout << "No games found for " << menu_title << ".\n";
     return;
   }
 
-  sortGamesByName(games);
+  std::sort(games.begin(), games.end(), [](const UnifiedGame &a, const UnifiedGame &b) {
+      return to_lower(a.name) < to_lower(b.name);
+  });
 
   while (true) {
-    cout << "\n=== Local Games ===\n";
+    cout << "\n=== " << menu_title << " ===\n";
     for (size_t i = 0; i < games.size(); ++i) {
       cout << "  [" << (i + 1) << "] " << games[i].name;
-      
+      if (menu_title == "All Games") {
+          if (games[i].source == GameSource::Steam) cout << " (Steam)";
+          else cout << " (Local)";
+      }
+
       double pref = get_game_preference(games[i].name);
       if (pref != 0.0) {
           cout << " [" << (pref > 0 ? "+" : "") << pref << "]";
@@ -69,7 +111,7 @@ static void run_local_mode() {
 
       std::string key = (games[i].igdb_id != 0)
                             ? "igdb_" + std::to_string(games[i].igdb_id)
-                            : "local_" + make_canonical(games[i].name);
+                            : (games[i].source == GameSource::Steam ? "steam_" + std::to_string(games[i].appid) : "local_" + make_canonical(games[i].name));
       long long pt = get_playtime(key);
       if (pt > 0)
         cout << " (Playtime: " << (pt / 60) << " min played)";
@@ -78,158 +120,6 @@ static void run_local_mode() {
       } else {
         cout << " [Unrecognized]";
       }
-      cout << "  (" << games[i].gamePath.string() << ")\n";
-    }
-    cout << "  [0] Back\n\n";
-
-    cout << "Enter selection: ";
-    int choice = -1;
-    if (!(cin >> choice)) {
-      cin.clear();
-      cin.ignore(10000, '\n');
-      cout << "Invalid input.\n";
-      continue;
-    }
-
-    if (choice == 0)
-      break;
-    if (choice < 1 || choice > static_cast<int>(games.size())) {
-      cout << "Invalid selection.\n";
-      continue;
-    }
-
-    const temp_GameEntry &selected = games[choice - 1];
-
-    while (true) {
-      cout << "\n--- Game Details ---\n";
-      cout << "Name: " << selected.name << "\n";
-
-      std::string key = (selected.igdb_id != 0)
-                            ? "igdb_" + std::to_string(selected.igdb_id)
-                            : "local_" + make_canonical(selected.name);
-      long long pt = get_playtime(key);
-      cout << "Total Playtime: ";
-      if (pt > 0)
-        cout << (pt / 60) << " minutes (" << pt << " seconds)\n";
-      else
-        cout << "Never played\n";
-      if (selected.igdb_id != 0) {
-        cout << "IGDB ID: " << selected.igdb_id << "\n";
-        GameMetadata meta = get_game_metadata(selected.igdb_id);
-        cout << "Developer: " << meta.developer << "\n";
-        cout << "Rating: " << (meta.rating > 0 ? std::to_string(meta.rating) : "N/A") << "\n";
-        if (meta.time_to_beat_seconds > 0) {
-          cout << "Time to Beat: " << (meta.time_to_beat_seconds / 3600) << " hours\n";
-        } else {
-          cout << "Time to Beat: N/A\n";
-        }
-        
-        cout << "Genres: ";
-        if (!meta.all_genres.empty()) {
-            for (size_t i = 0; i < meta.all_genres.size(); ++i) {
-                cout << meta.all_genres[i] << (i + 1 < meta.all_genres.size() ? ", " : "");
-            }
-            cout << "\n";
-        } else {
-            cout << "Unknown\n";
-        }
-        
-        cout << "[ML] Main Genres: ";
-        if (!meta.main_genres.empty()) {
-            for (size_t i = 0; i < meta.main_genres.size(); ++i) {
-                cout << meta.main_genres[i] << (i + 1 < meta.main_genres.size() ? ", " : "");
-            }
-            cout << "\n";
-        } else {
-            cout << "Unknown\n";
-        }
-      } else {
-        cout << "IGDB ID: Unrecognized\n";
-      }
-
-      cout << "Path: " << selected.gamePath.string() << "\n\n";
-
-      cout << "  [1] Launch Game\n";
-      cout << "  [2] Like\n";
-      cout << "  [3] Dislike\n";
-      cout << "  [0] Back to List\n\n";
-      cout << "Enter selection: ";
-
-      int sub_choice = -1;
-      if (!(cin >> sub_choice)) {
-        cin.clear();
-        cin.ignore(10000, '\n');
-        cout << "Invalid input.\n";
-        continue;
-      }
-
-      if (sub_choice == 0) {
-        break;
-      } else if (sub_choice == 2) {
-          double new_pref = toggle_game_preference(selected.name, 1.0);
-          if (new_pref > 0) cout << "[✓] " << selected.name << " -> +1.0 (Liked)\n";
-          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
-          continue;
-      } else if (sub_choice == 3) {
-          double new_pref = toggle_game_preference(selected.name, -1.0);
-          if (new_pref < 0) cout << "[✓] " << selected.name << " -> -1.0 (Disliked)\n";
-          else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
-          continue;
-      } else if (sub_choice == 1) {
-        cout << "\nLaunching: " << selected.name << "...\n";
-
-        auto start_time = std::time(nullptr);
-        int code = launchGame(selected.gamePath);
-        auto end_time = std::time(nullptr);
-
-        if (code == 0 || code == -1) {
-          if (end_time > start_time) {
-            long long duration = end_time - start_time;
-            std::string key = (selected.igdb_id != 0)
-                                  ? "igdb_" + std::to_string(selected.igdb_id)
-                                  : "local_" + make_canonical(selected.name);
-            record_play_session(key, selected.name, start_time, end_time);
-            cout << "Recorded " << duration << " seconds of playtime.\n";
-          }
-        } else {
-          cout << "[WARN] Process returned code: " << code << "\n";
-        }
-        break; // Return to the main game list after game closes
-      } else {
-        cout << "Invalid selection.\n";
-      }
-    }
-  }
-}
-
-static void run_steam_mode() {
-  std::vector<SteamGame> games = read_installed_steam_games();
-
-  if (games.empty()) {
-    cout << "No installed Steam games found.\n";
-    return;
-  }
-
-  while (true) {
-    cout << "\n=== Steam Games ===\n";
-    for (size_t i = 0; i < games.size(); ++i) {
-      cout << "  [" << (i + 1) << "] " << games[i].name;
-
-      double pref = get_game_preference(games[i].name);
-      if (pref != 0.0) {
-          cout << " [" << (pref > 0 ? "+" : "") << pref << "]";
-      }
-
-      std::string key = (games[i].igdb_id != 0)
-                            ? "igdb_" + std::to_string(games[i].igdb_id)
-                            : "steam_" + std::to_string(games[i].appid);
-      long long pt = get_playtime(key);
-      if (pt > 0)
-        cout << " (Playtime: " << (pt / 60) << " min played)";
-      if (games[i].igdb_id != 0)
-        cout << " [IGDB: " << games[i].igdb_id << "]";
-      else
-        cout << " [Unrecognized]";
       cout << "\n";
     }
     cout << "  [0] Back\n\n";
@@ -250,16 +140,17 @@ static void run_steam_mode() {
       continue;
     }
 
-    SteamGame &selected = games[choice - 1];
+    UnifiedGame &selected = games[choice - 1];
 
     while (true) {
-      cout << "\n--- Steam Game Details ---\n";
-      cout << "Name: " << selected.name << " (AppID: " << selected.appid
-           << ")\n";
+      cout << "\n--- Game Details ---\n";
+      cout << "Name: " << selected.name;
+      if (selected.source == GameSource::Steam) cout << " (AppID: " << selected.appid << ")\n";
+      else cout << "\n";
 
       std::string key = (selected.igdb_id != 0)
                             ? "igdb_" + std::to_string(selected.igdb_id)
-                            : "steam_" + std::to_string(selected.appid);
+                            : (selected.source == GameSource::Steam ? "steam_" + std::to_string(selected.appid) : "local_" + make_canonical(selected.name));
       long long pt = get_playtime(key);
       cout << "Total Playtime: ";
       if (pt > 0)
@@ -276,7 +167,7 @@ static void run_steam_mode() {
         } else {
           cout << "Time to Beat: N/A\n";
         }
-
+        
         cout << "Genres: ";
         if (!meta.all_genres.empty()) {
             for (size_t i = 0; i < meta.all_genres.size(); ++i) {
@@ -300,11 +191,16 @@ static void run_steam_mode() {
         cout << "IGDB ID: Unrecognized\n";
       }
 
-      cout << "Install Dir: " << selected.installDir.string() << "\n\n";
+      cout << "Install Dir: " << selected.installDir.string() << "\n";
+      if (selected.source == GameSource::Local) {
+          cout << "Path: " << selected.gamePath.string() << "\n";
+      }
+      cout << "\n";
 
       cout << "  [1] Launch Game\n";
       cout << "  [2] Like\n";
       cout << "  [3] Dislike\n";
+      cout << "  [4] Uninstall\n";
       cout << "  [0] Back to List\n\n";
       cout << "Enter selection: ";
 
@@ -329,38 +225,66 @@ static void run_steam_mode() {
           if (new_pref < 0) cout << "[✓] " << selected.name << " -> -1.0 (Disliked)\n";
           else cout << "[✓] " << selected.name << " -> 0.0 (Neutral)\n";
           continue;
+      } else if (action == 4) {
+          cout << "\n[?] Are you sure you want to uninstall \"" << selected.name << "\"? (y/N): ";
+          std::string confirm;
+          if (cin >> confirm && (confirm == "y" || confirm == "Y")) {
+              if (selected.source == GameSource::Steam) {
+                  if (uninstall_steam_game_by_appid(selected.appid)) {
+                      cout << "[✓] Uninstall request sent for \"" << selected.name << "\" (AppID: " << selected.appid << ")\n";
+                      cout << "    Steam will handle the rest.\n";
+                  } else {
+                      cout << "[WARN] Failed to send uninstall request to Steam.\n";
+                  }
+              } else {
+                  std::error_code ec;
+                  fs::remove_all(selected.installDir, ec);
+                  if (!ec) {
+                      cout << "[✓] Successfully uninstalled \"" << selected.name << "\".\n";
+                      games.erase(games.begin() + choice - 1);
+                      break; // Return to the main game list
+                  } else {
+                      cout << "[WARN] Failed to uninstall \"" << selected.name << "\": " << ec.message() << "\n";
+                  }
+              }
+          } else {
+              cout << "[✗] Uninstall cancelled.\n";
+          }
+          continue;
       } else if (action == 1) {
-        cout << "\nLaunching (Steam): " << selected.name << "...\n";
-
+        cout << "\nLaunching: " << selected.name << "...\n";
         auto start_time = std::time(nullptr);
-        if (!launch_steam_game_by_appid(selected.appid)) {
-          cout << "[WARN] Failed to launch via Steam protocol.\n";
-          break;
+        
+        if (selected.source == GameSource::Steam) {
+            if (!launch_steam_game_by_appid(selected.appid)) {
+              cout << "[WARN] Failed to launch via Steam protocol.\n";
+              break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            cout << "Monitoring process. Playtime is now recording...\n";
+            while (is_game_running_in_dir(selected.installDir)) {
+              std::this_thread::sleep_for(std::chrono::seconds(2));
+            }
+            auto end_time = std::time(nullptr);
+            if (end_time > start_time) {
+              long long duration = end_time - start_time;
+              record_play_session(key, selected.name, start_time, end_time);
+              cout << "Game closed. Recorded " << duration << " seconds of playtime.\n";
+            }
+        } else {
+            int code = launchGame(selected.gamePath);
+            auto end_time = std::time(nullptr);
+            if (code == 0 || code == -1) {
+              if (end_time > start_time) {
+                long long duration = end_time - start_time;
+                record_play_session(key, selected.name, start_time, end_time);
+                cout << "Recorded " << duration << " seconds of playtime.\n";
+              }
+            } else {
+              cout << "[WARN] Process returned code: " << code << "\n";
+            }
         }
-
-        // Wait a few seconds for Steam to process the request and spawn the
-        // game
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        cout << "Monitoring process. Playtime is now recording...\n";
-        // Polling loop: checks every 2 seconds if any process in installDir is
-        // running
-        while (is_game_running_in_dir(selected.installDir)) {
-          std::this_thread::sleep_for(std::chrono::seconds(2));
-        }
-
-        auto end_time = std::time(nullptr);
-
-        if (end_time > start_time) {
-          long long duration = end_time - start_time;
-          std::string key = (selected.igdb_id != 0)
-                                ? "igdb_" + std::to_string(selected.igdb_id)
-                                : "steam_" + std::to_string(selected.appid);
-          record_play_session(key, selected.name, start_time, end_time);
-          cout << "Game closed. Recorded " << duration
-               << " seconds of playtime.\n";
-        }
-        break; // Return to the main game list
+        break; // Return to the main game list after game closes
       } else {
         cout << "Invalid selection.\n";
       }
@@ -368,13 +292,37 @@ static void run_steam_mode() {
   }
 }
 
+static void run_all_mode() {
+  auto localGames = get_local_games();
+  auto steamGames = get_steam_games();
+  
+  std::vector<UnifiedGame> allGames;
+  allGames.reserve(localGames.size() + steamGames.size());
+  
+  for (auto& g : localGames) allGames.push_back(std::move(g));
+  for (auto& g : steamGames) allGames.push_back(std::move(g));
+  
+  run_games_menu(allGames, "All Games");
+}
+
+static void run_local_mode() {
+  auto games = get_local_games();
+  run_games_menu(games, "Local Games");
+}
+
+static void run_steam_mode() {
+  auto games = get_steam_games();
+  run_games_menu(games, "Steam Games");
+}
+
 int main() {
   UserMood mood = ask_user_mood();
 
   while (true) {
     cout << "\n=== Vortex Game Launcher ===\n";
-    cout << "  [1] Steam games\n";
-    cout << "  [2] Local directory games\n";
+    cout << "  [1] All games\n";
+    cout << "  [2] Steam games\n";
+    cout << "  [3] Local directory games\n";
     cout << "  [0] Exit\n\n";
     cout << "Choose mode: ";
 
@@ -390,8 +338,10 @@ int main() {
       cout << "Cya chap\n";
       break;
     } else if (mode == 1) {
-      run_steam_mode();
+      run_all_mode();
     } else if (mode == 2) {
+      run_steam_mode();
+    } else if (mode == 3) {
       run_local_mode();
     } else {
       cout << "Invalid selection.\n";

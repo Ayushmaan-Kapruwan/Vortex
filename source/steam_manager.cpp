@@ -194,3 +194,9 @@ bool launch_steam_game_by_appid(int appid) {
 	HINSTANCE res = ShellExecuteA(nullptr, "open", uri.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	return reinterpret_cast<intptr_t>(res) > 32;
 }
+
+bool uninstall_steam_game_by_appid(int appid) {
+	string uri = "steam://uninstall/" + std::to_string(appid);
+	HINSTANCE res = ShellExecuteA(nullptr, "open", uri.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+	return reinterpret_cast<intptr_t>(res) > 32;
+}
