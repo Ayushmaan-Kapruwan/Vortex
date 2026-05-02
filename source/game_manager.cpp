@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <shellapi.h>
 
 using std::cerr;
 using std::string;
@@ -246,7 +247,30 @@ int launchGame(const fs::path &gamePath) {
       workDir.c_str(),
       &si,
       &pi)) {
-      std::cerr << "[ERROR] CreateProcess failed. Error code: " << GetLastError() << "\n";
+      DWORD err = GetLastError();
+      if (err == ERROR_ELEVATION_REQUIRED) {
+          SHELLEXECUTEINFOW sei = { sizeof(sei) };
+          sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+          sei.lpVerb = L"runas";
+          sei.lpFile = gamePath.c_str();
+          sei.lpDirectory = workDir.c_str();
+          sei.nShow = SW_SHOWNORMAL;
+          
+          if (ShellExecuteExW(&sei)) {
+              if (sei.hProcess) {
+                  WaitForSingleObject(sei.hProcess, INFINITE);
+                  DWORD exitCode = 0;
+                  GetExitCodeProcess(sei.hProcess, &exitCode);
+                  CloseHandle(sei.hProcess);
+                  return static_cast<int>(exitCode);
+              }
+              return 0;
+          } else {
+              std::cerr << "[ERROR] ShellExecuteEx failed. Error code: " << GetLastError() << "\n";
+              return -1;
+          }
+      }
+      std::cerr << "[ERROR] CreateProcess failed. Error code: " << err << "\n";
       return -1;
   }
   

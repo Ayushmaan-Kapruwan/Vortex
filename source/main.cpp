@@ -274,14 +274,15 @@ static void run_games_menu(std::vector<UnifiedGame>& games, const std::string& m
         } else {
             int code = launchGame(selected.gamePath);
             auto end_time = std::time(nullptr);
-            if (code == 0 || code == -1) {
-              if (end_time > start_time) {
-                long long duration = end_time - start_time;
-                record_play_session(key, selected.name, start_time, end_time);
-                cout << "Recorded " << duration << " seconds of playtime.\n";
-              }
-            } else {
-              cout << "[WARN] Process returned code: " << code << "\n";
+            
+            if (code != 0) {
+              cout << "[INFO] Process exited with code: " << code << "\n";
+            }
+            
+            if (end_time > start_time) {
+              long long duration = end_time - start_time;
+              record_play_session(key, selected.name, start_time, end_time);
+              cout << "Recorded " << duration << " seconds of playtime.\n";
             }
         }
         break; // Return to the main game list after game closes
