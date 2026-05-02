@@ -8,6 +8,7 @@
 #include "preference_manager.h"
 #include "stats_manager.h"
 #include "steam_manager.h"
+#include "steamgriddb_manager.h"
 
 #include <chrono>
 #include <thread>
@@ -318,6 +319,15 @@ static void run_steam_mode() {
 
 int main() {
   UserMood mood = ask_user_mood();
+
+  cout << "Checking for new games to download artwork...\n";
+  auto localGamesInit = get_local_games();
+  auto steamGamesInit = get_steam_games();
+  std::vector<std::string> allGameNames;
+  for (const auto& g : localGamesInit) allGameNames.push_back(g.name);
+  for (const auto& g : steamGamesInit) allGameNames.push_back(g.name);
+  ensure_steamgriddb_images(allGameNames);
+  cout << "Artwork check complete.\n";
 
   while (true) {
     cout << "\n=== Vortex Game Launcher ===\n";
