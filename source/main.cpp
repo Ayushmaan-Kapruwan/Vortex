@@ -1,6 +1,8 @@
 #include <ctime>
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <string>
 
 #include "game_manager.h"
 #include "igdb_manager.h"
@@ -49,12 +51,72 @@ struct UnifiedGame {
     fs::path gamePath;
 };
 
+static std::vector<fs::path> get_local_game_directories() {
+    std::vector<fs::path> dirs;
+    fs::path config_path = "local_game_dirs.txt";
+    
+    if (fs::exists(config_path)) {
+        std::ifstream file(config_path);
+        std::string line;
+        while (std::getline(file, line)) {
+            if (!line.empty() && line[0] != '#') {
+                dirs.push_back(line);
+            }
+        }
+        if (!dirs.empty()) {
+            return dirs;
+        }
+    }
+    
+    std::cout << "\n=== Local Games Configuration ===\n";
+    std::cout << "No local game directories configured.\n";
+    std::cout << "Please enter the full paths to your local game folders (e.g., E:\\Games).\n";
+    std::cout << "Enter an empty line when you are finished.\n";
+    
+    // Clear any leftover newlines from previous formatted inputs
+    if (std::cin.peek() == '\n') std::cin.ignore();
+
+    std::string line;
+    while (true) {
+        std::cout << "Folder path (or press Enter to finish): ";
+        std::getline(std::cin, line);
+        
+        // Trim whitespace
+        line.erase(0, line.find_first_not_of(" \t\r\n"));
+        line.erase(line.find_last_not_of(" \t\r\n") + 1);
+        
+        if (line.empty()) {
+            if (dirs.empty()) {
+                std::cout << "You must enter at least one directory.\n";
+                continue;
+            }
+            break;
+        }
+        
+        if (fs::exists(line) && fs::is_directory(line)) {
+            dirs.push_back(line);
+        } else {
+            std::cout << "Invalid directory path or directory does not exist. Please try again.\n";
+        }
+    }
+    
+    std::ofstream out(config_path);
+    if (out) {
+        out << "# Local Game Directories\n";
+        for (const auto& d : dirs) {
+            out << d.string() << "\n";
+        }
+    }
+    
+    return dirs;
+}
+
 static std::vector<UnifiedGame> get_local_games() {
   std::vector<temp_GameEntry> localGames;
-  fs::path gameDir1 = "E:\\Games";
-  fs::path gameDir2 = "D:\\Games";
-  scan_directory_for_games(gameDir1, localGames);
-  scan_directory_for_games(gameDir2, localGames);
+  auto gameDirs = get_local_game_directories();
+  for (const auto& dir : gameDirs) {
+      scan_directory_for_games(dir, localGames);
+  }
   
   std::vector<UnifiedGame> games;
   games.reserve(localGames.size());
