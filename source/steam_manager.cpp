@@ -11,6 +11,8 @@
 #include <shellapi.h>
 #include <string>
 
+#include "igdb_manager.h"
+
 using std::string;
 using std::vector;
 
@@ -172,6 +174,9 @@ vector<SteamGame> read_installed_steam_games() {
 				g.installDir = lib / "steamapps" / "common" / installdir;
 			}
 
+			IgdbGameInfo info = igdb_resolve_game(g.name, false);
+			g.igdb_id = info.id;
+
 			games.push_back(std::move(g));
 		}
 	}
@@ -186,6 +191,12 @@ vector<SteamGame> read_installed_steam_games() {
 
 bool launch_steam_game_by_appid(int appid) {
 	string uri = "steam://run/" + std::to_string(appid);
+	HINSTANCE res = ShellExecuteA(nullptr, "open", uri.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+	return reinterpret_cast<intptr_t>(res) > 32;
+}
+
+bool uninstall_steam_game_by_appid(int appid) {
+	string uri = "steam://uninstall/" + std::to_string(appid);
 	HINSTANCE res = ShellExecuteA(nullptr, "open", uri.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	return reinterpret_cast<intptr_t>(res) > 32;
 }
